@@ -1,13 +1,56 @@
 import * as THREE from 'three';
 import { FRAME_COLOR } from '../config.js';
 
-// Matériaux provisoires (couleurs unies), partagés entre les cellules.
-// Remplacés par des textures PBR à l'étape 7.
-export const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x8a7b6a, roughness: 0.8 });
-export const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xe8e4dc, roughness: 0.9 });
+// Textures PBR (CC0 : Poly Haven, ambientCG) rangées dans public/textures/<dossier>/
+// color.jpg, normal.jpg (version GL), roughness.jpg.
+// `size` = taille réelle d'un motif (m), pour une échelle constante : les
+// coordonnées de texture sont calculées en mètres dans le monde (cell.js), ce
+// qui raccorde aussi le motif d'une cellule à l'autre.
+// Pour tester une autre texture : commenter la ligne active, décommenter une autre.
+
+// Sol
+export const FLOOR = { folder: 'diagonal_parquet', size: 2.36 };
+// export const FLOOR = { folder: 'herringbone_parquet', size: 3.4 };
+// export const FLOOR = { folder: 'woodfloor051', size: 1.8 };
+// export const FLOOR = { folder: 'concrete048', size: 2 }; // taille réelle inconnue (estimée)
+
+// Murs (taille réelle inconnue pour les enduits : estimée à 2 m)
+export const WALL = { folder: 'plaster001', size: 2 };
+// export const WALL = { folder: 'plaster002', size: 2 };
+// export const WALL = { folder: 'plaster003', size: 2 };
+// export const WALL = { folder: 'plaster004', size: 2 };
+// export const WALL = { folder: 'plaster005', size: 2 };
+
+const loader = new THREE.TextureLoader();
+
+// Charge une carte : répétition activée ; la couleur est en sRGB, la normal
+// map et la rugosité restent en espace linéaire (défaut).
+function loadMap(folder, file, isColor = false) {
+  const texture = loader.load(`/textures/${folder}/${file}`);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.anisotropy = 8;
+  if (isColor) texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+// Matériau PBR complet (couleur, normal map, rugosité) depuis un dossier
+function createPbrMaterial({ folder }) {
+  return new THREE.MeshStandardMaterial({
+    map: loadMap(folder, 'color.jpg', true),
+    normalMap: loadMap(folder, 'normal.jpg'),
+    roughnessMap: loadMap(folder, 'roughness.jpg'),
+    roughness: 1, // multiplie la carte de rugosité
+  });
+}
+
+// Matériaux partagés entre les cellules
+export const floorMaterial = createPbrMaterial(FLOOR);
+export const wallMaterial = createPbrMaterial(WALL);
 export const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 });
 
-// Cadre : bois sombre mat (couleur unie). Surchargeable par tableau (voir frame.js).
+// Cadre : bois sombre mat (couleur unie : le grain serait mal orienté par
+// ExtrudeGeometry). Surchargeable par tableau (voir frame.js).
 export function createFrameMaterial(color = FRAME_COLOR) {
   return new THREE.MeshStandardMaterial({ color, roughness: 0.6, metalness: 0.1 });
 }

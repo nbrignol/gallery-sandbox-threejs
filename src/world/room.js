@@ -44,11 +44,13 @@ export function createRoom(cells) {
 
   for (const [i, j] of cells) {
     const sides = getWallSides(cells, i, j);
+    const origin = { x: i * CELL_SIZE, z: j * CELL_SIZE };
     const { group: cellGroup, wallMeshes } = createCell(
       CELL_SIZE,
       sides.map((s) => s.name),
+      origin,
     );
-    cellGroup.position.set(i * CELL_SIZE, 0, j * CELL_SIZE);
+    cellGroup.position.set(origin.x, 0, origin.z);
     group.add(cellGroup, createCellLight(cellGroup.position.x, cellGroup.position.z));
     occluders.push(...wallMeshes);
 
