@@ -26,6 +26,8 @@ export const PAINTING_SPOT_DISTANCE = 1.5; // distance du spot devant le mur (m)
 export const FRAME_BORDER = 0.05; // largeur de la bordure (m)
 export const FRAME_DEPTH = 0.03; // profondeur (m)
 export const FRAME_COLOR = 0x2b1d14; // bois sombre
+export const FRAME_BEVEL = 0.008; // taille et épaisseur du biseau (m)
+export const FRAME_CANVAS_RECESS = 0.002; // retrait de la toile derrière la face avant du cadre (m)
 
 // Panneau d'information : angles en degrés d'écart avec la vue face au tableau
 export const PANEL_FADE_START = 10; // début du fondu
@@ -38,3 +40,4 @@ export const CLICK_MAX_MOVE = 5; // en deçà (px), un appui-relâchement est un
 export const TRAVEL_SECONDS_PER_METER = 0.3; // durée du déplacement par mètre
 export const TRAVEL_MIN_DURATION = 0.4; // durée minimale (s)
 export const TRAVEL_MAX_DURATION = 1.8; // durée maximale (s)
+export const CLOSE_BACKOFF_DISTANCE = 1.5; // recul de la caméra à la fermeture du panneau (m)

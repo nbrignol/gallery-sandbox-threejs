@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { PANEL_FADE_START, PANEL_HIDE_ANGLE, PANEL_SHOW_ANGLE } from '../config.js';
+import { CLOSE_BACKOFF_DISTANCE, PANEL_FADE_START, PANEL_HIDE_ANGLE, PANEL_SHOW_ANGLE } from '../config.js';
 import { createPanel } from '../ui/panel.js';
 import { wrapAngle } from './angle.js';
 import { createLook } from './look.js';
@@ -41,9 +41,27 @@ export function createNavigation({ canvas, camera, paintings, occluders }) {
     panelShown = false;
   }
 
+  // Fermeture du panneau : la caméra recule de CLOSE_BACKOFF_DISTANCE mètres,
+  // en s'éloignant du mur du tableau (le yaw ne change pas).
+  // Pendant le recul : état 'moving' (glisser et clics désactivés).
   function closePanel() {
+    if (state.name !== 'atPainting') return;
+    const { id } = state;
     panelOpen = false;
     hidePanel();
+
+    // La normale du mur vers l'intérieur se déduit du yaw de face : (sin, cos)
+    const faceYaw = paintings[id].userData.viewpoint.yaw;
+    const position = camera.position.clone();
+    position.x += Math.sin(faceYaw) * CLOSE_BACKOFF_DISTANCE;
+    position.z += Math.cos(faceYaw) * CLOSE_BACKOFF_DISTANCE;
+
+    state = { name: 'moving', id };
+    look.setEnabled(false);
+    travel.start({ position, yaw: look.getYaw() }, () => {
+      state = { name: 'atPainting', id };
+      look.setEnabled(true);
+    });
   }
 
   // Précédent / suivant : ordre de paintings.flat(), en boucle

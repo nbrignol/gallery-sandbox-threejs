@@ -7,7 +7,9 @@ import {
   PAINTING_SPOT_DISTANCE,
   PAINTING_SPOT_INTENSITY,
   PAINTING_WALL_OFFSET,
+  FRAME_CANVAS_RECESS,
 } from '../config.js';
+import { createFrame, resolveFrameStyle } from './frame.js';
 import { computeViewpoint } from './viewpoint.js';
 
 const loader = new THREE.TextureLoader();
@@ -20,12 +22,12 @@ async function loadTexture(src) {
   return texture;
 }
 
-// Taille de la toile : hauteur fixe, largeur selon le ratio, plafonnée à
-// une part de la largeur du mur (la hauteur est alors réduite).
-function fitSize(aspect, wallWidth) {
+// Taille de la toile : hauteur fixe, largeur selon le ratio, plafonnée à une
+// part de la largeur du mur, cadre compris (la hauteur est alors réduite).
+function fitSize(aspect, wallWidth, border) {
   let height = PAINTING_HEIGHT;
   let width = height * aspect;
-  const maxWidth = wallWidth * PAINTING_MAX_WALL_RATIO;
+  const maxWidth = wallWidth * PAINTING_MAX_WALL_RATIO - 2 * border;
   if (width > maxWidth) {
     width = maxWidth;
     height = width / aspect;
@@ -33,11 +35,12 @@ function fitSize(aspect, wallWidth) {
   return { width, height };
 }
 
-// Toile (plan texturé)
-function createCanvas(texture, width, height) {
+// Toile (plan texturé), en léger retrait dans le trou du cadre
+function createCanvas(texture, width, height, frameDepth) {
   const material = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.9 });
   const canvas = new THREE.Mesh(new THREE.PlaneGeometry(width, height), material);
   canvas.name = 'canvas';
+  canvas.position.z = frameDepth - PAINTING_WALL_OFFSET - FRAME_CANVAS_RECESS;
   return canvas;
 }
 
@@ -56,11 +59,18 @@ function createSpot(width, height, centerY) {
 export async function createPainting(data, wall, id) {
   const texture = await loadTexture(data.src);
   const aspect = texture.image.width / texture.image.height;
-  const { width, height } = fitSize(aspect, wall.width);
+  const style = resolveFrameStyle(data.frame);
+  const { width: canvasWidth, height: canvasHeight } = fitSize(aspect, wall.width, style.border);
+  // Dimensions cadre compris (point de vue, spot)
+  const width = canvasWidth + 2 * style.border;
+  const height = canvasHeight + 2 * style.border;
 
   const group = new THREE.Group();
   group.name = `painting-${id}`;
-  group.add(createCanvas(texture, width, height));
+  group.add(
+    createCanvas(texture, canvasWidth, canvasHeight, style.depth),
+    createFrame(canvasWidth, canvasHeight, style),
+  );
 
   const spot = createSpot(width, height, PAINTING_CENTER_HEIGHT);
   group.add(spot, spot.target); // la cible reste à l'origine du groupe
@@ -77,8 +87,10 @@ export async function createPainting(data, wall, id) {
     src: data.src,
     title: data.title,
     desc: data.desc,
-    width,
+    width, // cadre compris
     height,
+    canvasWidth,
+    canvasHeight,
     viewpoint: computeViewpoint({
       center: group.position,
       normal: wall.normal,

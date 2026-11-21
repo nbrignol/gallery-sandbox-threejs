@@ -3,6 +3,7 @@
 // (ordre N, E, S, O parmi les murs existants), au centre.
 //
 // Champs : src, title, desc.
+// Optionnel : frame { border, depth, color } pour surcharger le cadre par défaut (config.js).
 // Champs optionnels réservés (pas encore implémentés) : side, t, h
 // pour un futur placement fin à la place de l'attribution automatique.
 // Images provisoires : à remplacer par les vraies images dans public/paintings/.
