@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { CAMERA_FOV, EYE_HEIGHT, SITE_NAME } from './config.js';
+import { cells } from './data/layout.js';
+import { createRoom } from './world/room.js';
 import './ui/header.css';
 
 // Affiche le nom dans l'en-tête
@@ -22,33 +24,16 @@ function createScene() {
   return scene;
 }
 
-// Caméra à hauteur des yeux
-function createCamera() {
+// Caméra à hauteur des yeux, placée au-dessus du point `start` (Vector3)
+function createCamera(start) {
   const camera = new THREE.PerspectiveCamera(
     CAMERA_FOV,
     window.innerWidth / window.innerHeight,
     0.1,
     100,
   );
-  camera.position.set(0, EYE_HEIGHT, 3);
+  camera.position.set(start.x, EYE_HEIGHT, start.z);
   return camera;
-}
-
-// Cube de test : À RETIRER (étape 2)
-function createTestCube() {
-  const cube = new THREE.Mesh(
-    new THREE.BoxGeometry(1, 1, 1),
-    new THREE.MeshStandardMaterial({ color: 0xc0824a }),
-  );
-  cube.position.set(0, EYE_HEIGHT, 0);
-  return cube;
-}
-
-// Lumières de test : À RETIRER (étape 2)
-function createTestLights() {
-  const light = new THREE.DirectionalLight(0xffffff, 2);
-  light.position.set(2, 4, 3);
-  return [new THREE.AmbientLight(0xffffff, 0.5), light];
 }
 
 // Redimensionnement : renderer et caméra suivent la fenêtre
@@ -70,7 +55,7 @@ function startLoop(renderer, scene, camera, update) {
   timer.connect(document); // met le timer en pause quand l'onglet est masqué
   renderer.setAnimationLoop((time) => {
     timer.update(time);
-    update(timer.getDelta());
+    update?.(timer.getDelta());
     renderer.render(scene, camera);
   });
 }
@@ -80,15 +65,15 @@ function init() {
 
   const renderer = createRenderer();
   const scene = createScene();
-  const camera = createCamera();
 
-  const testCube = createTestCube();
-  scene.add(testCube, ...createTestLights());
+  const room = createRoom(cells);
+  scene.add(room.group);
+
+  // Départ au centre de la cellule d'angle (première cellule)
+  const camera = createCamera(room.cells[0].center);
 
   setupResize(renderer, camera);
-  startLoop(renderer, scene, camera, (dt) => {
-    testCube.rotation.y += dt * 0.6; // à retirer avec le cube
-  });
+  startLoop(renderer, scene, camera);
 }
 
 init();
