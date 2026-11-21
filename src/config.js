@@ -31,3 +31,10 @@ export const FRAME_COLOR = 0x2b1d14; // bois sombre
 export const PANEL_FADE_START = 10; // début du fondu
 export const PANEL_HIDE_ANGLE = 30; // disparition complète
 export const PANEL_SHOW_ANGLE = 15; // réapparition (hystérésis)
+
+// Navigation
+export const LOOK_SENSITIVITY = 0.004; // rotation (rad) par pixel de glisser
+export const CLICK_MAX_MOVE = 5; // en deçà (px), un appui-relâchement est un clic
+export const TRAVEL_SECONDS_PER_METER = 0.3; // durée du déplacement par mètre
+export const TRAVEL_MIN_DURATION = 0.4; // durée minimale (s)
+export const TRAVEL_MAX_DURATION = 1.8; // durée maximale (s)

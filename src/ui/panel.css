@@ -1,0 +1,83 @@
+/* Panneau à droite, sous l'en-tête (≈ 100 px). Les clics restent dans le
+   panneau : il est frère du canvas, pas dessus, donc pas de raycast. */
+.panel {
+  --open: 0;
+  --fade: 1;
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 100px);
+  right: 24px;
+  z-index: 5;
+  box-sizing: border-box;
+  width: min(340px, calc(100vw - 48px));
+  max-height: calc(100dvh - 100px - env(safe-area-inset-top) - 24px);
+  overflow-y: auto;
+  padding: 20px 22px;
+  border-radius: 10px;
+  background: rgba(20, 20, 20, 0.78);
+  backdrop-filter: blur(8px);
+  color: #f2f2f2;
+  font-family: system-ui, sans-serif;
+  opacity: calc(var(--open) * var(--fade));
+  transform: translateX(calc((1 - var(--open)) * 24px));
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.panel.is-open {
+  --open: 1;
+  pointer-events: auto;
+  visibility: visible;
+}
+
+.panel-title {
+  margin: 0 28px 10px 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.panel-desc {
+  margin: 0 0 18px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #d4d4d4;
+}
+
+.panel-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.panel-btn,
+.panel-close {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+
+.panel-btn {
+  flex: 1;
+  padding: 6px 0;
+  border-radius: 6px;
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.panel-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.panel-btn:hover,
+.panel-close:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
