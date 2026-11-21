@@ -41,3 +41,6 @@ export const TRAVEL_SECONDS_PER_METER = 0.3; // durée du déplacement par mètr
 export const TRAVEL_MIN_DURATION = 0.4; // durée minimale (s)
 export const TRAVEL_MAX_DURATION = 1.8; // durée maximale (s)
 export const CLOSE_BACKOFF_DISTANCE = 1.5; // recul de la caméra à la fermeture du panneau (m)
+export const HOVER_GLOW = 1.5; // intensité du halo de survol (émissive)
+export const HOVER_SPOT_BOOST = 1.3; // surcroît d'intensité du spot au survol (0.3 = +30 %)
+export const HOVER_GLOW_SPEED = 10; // vitesse du fondu du halo (1/s)

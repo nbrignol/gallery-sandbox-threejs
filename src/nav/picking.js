@@ -13,9 +13,10 @@ export function findPaintingGroup(object) {
 
 // Picking par raycast depuis le pointeur. Les murs (`occluders`) sont dans le
 // raycast : un tableau caché derrière un mur n'est pas cliquable.
-// `onPick(group)` est appelé au clic sur un tableau ; le curseur devient une
-// main au survol. Retourne { dispose }.
-export function createPicking({ canvas, camera, paintings, occluders, onPick }) {
+// `onPick(group)` est appelé au clic sur un tableau (hors glisser) ;
+// `onHover(group|null)` quand le tableau survolé change ; le curseur devient
+// une main au survol. Retourne { dispose }.
+export function createPicking({ canvas, camera, paintings, occluders, onPick, onHover }) {
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
   const targets = [...paintings, ...occluders];
@@ -32,8 +33,22 @@ export function createPicking({ canvas, camera, paintings, occluders, onPick }) 
     return hit ? findPaintingGroup(hit.object) : null;
   }
 
+  // Survol (souris uniquement)
+  let hovered = null;
+
+  function setHovered(group) {
+    canvas.style.cursor = group ? 'pointer' : '';
+    if (group === hovered) return;
+    hovered = group;
+    onHover?.(group);
+  }
+
   function onMove(event) {
-    canvas.style.cursor = pick(event) ? 'pointer' : '';
+    if (event.pointerType === 'mouse') setHovered(pick(event));
+  }
+
+  function onLeave() {
+    setHovered(null);
   }
 
   // Clic = appui puis relâchement à moins de CLICK_MAX_MOVE px (sinon : glisser)
@@ -53,12 +68,14 @@ export function createPicking({ canvas, camera, paintings, occluders, onPick }) 
   }
 
   canvas.addEventListener('pointermove', onMove);
+  canvas.addEventListener('pointerleave', onLeave);
   canvas.addEventListener('pointerdown', onDown);
   canvas.addEventListener('pointerup', onUp);
 
   return {
     dispose() {
       canvas.removeEventListener('pointermove', onMove);
+      canvas.removeEventListener('pointerleave', onLeave);
       canvas.removeEventListener('pointerdown', onDown);
       canvas.removeEventListener('pointerup', onUp);
     },

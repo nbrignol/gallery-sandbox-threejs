@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { CLOSE_BACKOFF_DISTANCE, PANEL_FADE_START, PANEL_HIDE_ANGLE, PANEL_SHOW_ANGLE } from '../config.js';
 import { createPanel } from '../ui/panel.js';
 import { wrapAngle } from './angle.js';
+import { createHighlight } from './highlight.js';
 import { createLook } from './look.js';
 import { createPicking } from './picking.js';
 import { createTravel } from './travel.js';
@@ -20,10 +21,12 @@ function fadeForAngle(degrees) {
 export function createNavigation({ canvas, camera, paintings, occluders }) {
   const look = createLook(canvas, camera);
   const travel = createTravel(camera, look);
+  const highlight = createHighlight(paintings);
 
   let state = { name: 'idle', id: null };
   let panelOpen = false; // faux si l'utilisateur a fermé le panneau
   let panelShown = false; // état affiché actuel (hystérésis)
+  let hoveredGroup = null; // tableau sous le pointeur (picking)
 
   const panel = createPanel({
     onPrev: () => step(-1),
@@ -105,12 +108,17 @@ export function createNavigation({ canvas, camera, paintings, occluders }) {
     paintings,
     occluders,
     onPick: (group) => goTo(group.userData.paintingId),
+    onHover: (group) => (hoveredGroup = group),
   });
 
   return {
     goTo,
     update(dt) {
       travel.update(dt);
+      // Pas de halo pendant un déplacement ; il revient à l'arrivée si le
+      // pointeur est toujours sur le tableau
+      highlight.setHovered(state.name === 'moving' ? null : hoveredGroup);
+      highlight.update(dt);
       if (state.name === 'atPainting' && panelOpen) updatePanelVisibility();
     },
   };

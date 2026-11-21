@@ -37,7 +37,15 @@ function fitSize(aspect, wallWidth, border) {
 
 // Toile (plan texturé), en léger retrait dans le trou du cadre
 function createCanvas(texture, width, height, frameDepth) {
-  const material = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.9 });
+  // Émissive = la texture elle-même, intensité 0 au repos : le halo de survol
+  // (nav/highlight.js) éclaircit l'image sans la teinter.
+  const material = new THREE.MeshStandardMaterial({
+    map: texture,
+    roughness: 0.9,
+    emissive: 0xffffff,
+    emissiveMap: texture,
+    emissiveIntensity: 0,
+  });
   const canvas = new THREE.Mesh(new THREE.PlaneGeometry(width, height), material);
   canvas.name = 'canvas';
   canvas.position.z = frameDepth - PAINTING_WALL_OFFSET - FRAME_CANVAS_RECESS;
@@ -48,6 +56,7 @@ function createCanvas(texture, width, height, frameDepth) {
 // +Z = devant le tableau, origine = centre du tableau)
 function createSpot(width, height, centerY) {
   const spot = new THREE.SpotLight(0xfff2e0, PAINTING_SPOT_INTENSITY, 0, 1, 0.6, 2);
+  spot.name = 'spot';
   spot.position.set(0, CEILING_HEIGHT - 0.3 - centerY, PAINTING_SPOT_DISTANCE);
   const reach = Math.hypot(spot.position.y, spot.position.z);
   spot.angle = Math.min(Math.atan((Math.max(width, height) * 0.75) / reach), Math.PI / 3);
