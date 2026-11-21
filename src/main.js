@@ -1,7 +1,9 @@
 import * as THREE from 'three';
 import { CAMERA_FOV, EYE_HEIGHT, SITE_NAME } from './config.js';
 import { cells } from './data/layout.js';
+import { paintings as paintingsByCell } from './data/paintings.js';
 import { createRoom } from './world/room.js';
+import { createGallery } from './world/gallery.js';
 import './ui/header.css';
 
 // Affiche le nom dans l'en-tête
@@ -60,7 +62,22 @@ function startLoop(renderer, scene, camera, update) {
   });
 }
 
-function init() {
+// Outil de test temporaire (dev seulement) : `__gallery.goto(id)` dans la
+// console place la caméra au point de vue du tableau `id`. Remplacé par la
+// navigation à l'étape 6.
+function exposeDebugTools(camera, paintings) {
+  if (!import.meta.env.DEV) return;
+  window.__gallery = {
+    paintings,
+    goto(id) {
+      const { position, yaw } = paintings[id].userData.viewpoint;
+      camera.position.copy(position);
+      camera.rotation.set(0, yaw, 0);
+    },
+  };
+}
+
+async function init() {
   setupHeader();
 
   const renderer = createRenderer();
@@ -69,9 +86,13 @@ function init() {
   const room = createRoom(cells);
   scene.add(room.group);
 
+  const gallery = await createGallery(room, paintingsByCell);
+  scene.add(gallery.group);
+
   // Départ au centre de la cellule d'angle (première cellule)
   const camera = createCamera(room.cells[0].center);
 
+  exposeDebugTools(camera, gallery.paintings);
   setupResize(renderer, camera);
   startLoop(renderer, scene, camera);
 }

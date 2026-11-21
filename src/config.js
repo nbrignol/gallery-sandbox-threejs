@@ -16,6 +16,12 @@ export const PAINTING_HEIGHT = 1; // hauteur de toile (m)
 export const PAINTING_CENTER_HEIGHT = 1.6; // hauteur du centre du tableau (m)
 export const PAINTING_MAX_WALL_RATIO = 0.7; // largeur max en part de la largeur du mur
 
+export const PAINTING_WALL_OFFSET = 0.02; // décalage devant le mur (m)
+export const PAINTING_SCREEN_FILL = 0.65; // part de l'écran occupée par le tableau au point de vue
+export const PANEL_VIEW_SHIFT = 0.2; // décalage latéral du point de vue (part de la demi-largeur visible), pour laisser la place au panneau à droite
+export const PAINTING_SPOT_INTENSITY = 20; // intensité du spot (cd)
+export const PAINTING_SPOT_DISTANCE = 1.5; // distance du spot devant le mur (m)
+
 // Cadres (valeurs par défaut)
 export const FRAME_BORDER = 0.05; // largeur de la bordure (m)
 export const FRAME_DEPTH = 0.03; // profondeur (m)
