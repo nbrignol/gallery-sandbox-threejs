@@ -22,6 +22,25 @@
   cursor: pointer;
 }
 
+/* HUD debug : cellule courante et rotation, juste au-dessus des options */
+#debug-hud {
+  position: fixed;
+  right: 1rem;
+  bottom: calc(env(safe-area-inset-bottom) + 4rem);
+  z-index: 10;
+  padding: 0.5rem 0.75rem;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 0.5rem;
+  color: #fff;
+  font-family: ui-monospace, monospace;
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+
+#debug-hud[hidden] {
+  display: none;
+}
+
 /* Compteur FPS en haut à droite (le panneau d'information est placé en dessous) */
 #fps {
   position: fixed;

@@ -25,6 +25,7 @@ import { createRoomLights } from './world/roomLights.js';
 import { floorMaterial, onRoomTextureLoaded, roomTextureCount } from './world/materials.js';
 import { createNavigation } from './nav/navigation.js';
 import { createQuality, setupQualityUI } from './world/quality.js';
+import { createDebug } from './world/debug.js';
 import { createFpsCounter } from './ui/fps.js';
 import { createLoadingSteps, paint } from './ui/loading.js';
 import './ui/header.css';
@@ -217,9 +218,21 @@ async function init() {
 
   const setLow = setupResize(renderer, camera, navigation.refitTopView);
   setupQualityUI(createQuality({ renderer, scene, camera, roomLights, applyPixelRatio: setLow }));
+  const debug = createDebug({
+    scene,
+    room,
+    gallery,
+    camera,
+    look: navigation.look,
+    hud: document.getElementById('debug-hud'),
+  });
+  document.getElementById('opt-debug').addEventListener('change', (event) => {
+    debug.setEnabled(event.target.checked);
+  });
   startLoop(renderer, scene, camera, (dt) => {
     navigation.update(dt);
     roomLights.update(camera);
+    debug.update();
   });
 }
 
