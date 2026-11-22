@@ -21,3 +21,18 @@
   gap: 0.4rem;
   cursor: pointer;
 }
+
+/* Compteur FPS en haut à droite (le panneau d'information est placé en dessous) */
+#fps {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 1rem);
+  right: 1rem;
+  z-index: 10;
+  padding: 0.5rem 0.75rem;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 0.5rem;
+  color: #fff;
+  font-family: ui-monospace, monospace;
+  font-size: 0.9rem;
+  pointer-events: none;
+}

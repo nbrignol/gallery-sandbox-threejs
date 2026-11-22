@@ -26,6 +26,7 @@ import { createRoomLights } from './world/roomLights.js';
 import { floorMaterial } from './world/materials.js';
 import { createNavigation } from './nav/navigation.js';
 import { createQuality, setupQualityUI } from './world/quality.js';
+import { createFpsCounter } from './ui/fps.js';
 import './ui/header.css';
 import './ui/quality.css';
 
@@ -98,10 +99,12 @@ function setupResize(renderer, camera, afterResize) {
 
 // Boucle de rendu ; `update(dt)` est appelée à chaque image
 function startLoop(renderer, scene, camera, update) {
+  const fps = createFpsCounter(document.getElementById('fps'));
   const timer = new THREE.Timer();
   timer.connect(document); // met le timer en pause quand l'onglet est masqué
   renderer.setAnimationLoop((time) => {
     timer.update(time);
+    fps.tick(time);
     update?.(timer.getDelta());
     renderer.render(scene, camera);
   });
