@@ -4,7 +4,7 @@
 export const SITE_NAME = 'Galerie';
 
 // Salle
-export const CELL_SIZE = 8; // côté d'une cellule carrée (m)
+export const CELL_SIZE = 6; // côté d'une cellule carrée (m)
 export const CEILING_HEIGHT = 3.5; // hauteur sous plafond (m)
 export const PLINTH_BOTTOM_HEIGHT = 0.12; // plinthe entre le sol et le mur (m) ; 0 = aucune
 export const PLINTH_TOP_HEIGHT = 0.08; // plinthe entre le mur et le plafond (m) ; 0 = aucune
@@ -74,6 +74,14 @@ export const TRAVEL_SECONDS_PER_METER = 0.3; // durée du déplacement par mètr
 export const TRAVEL_MIN_DURATION = 0.4; // durée minimale (s)
 export const TRAVEL_MAX_DURATION = 1.8; // durée maximale (s)
 export const CLOSE_BACKOFF_DISTANCE = 1.5; // recul de la caméra à la fermeture du panneau (m)
-export const HOVER_GLOW = 1.5; // intensité du halo de survol (émissive)
-export const HOVER_SPOT_BOOST = 1.3; // surcroît d'intensité du spot au survol (0.3 = +30 %)
-export const HOVER_GLOW_SPEED = 10; // vitesse du fondu du halo (1/s)
+// Glow de survol : dégradé autour du tableau + cadre (pas une lumière)
+export const HOVER_GLOW_SIZE = 0.35; // largeur du dégradé autour du cadre (m)
+export const HOVER_GLOW_OPACITY = 0.12; // opacité maximale du glow au survol
+export const HOVER_GLOW_COLOR = 0xfff0d8; // couleur du glow (blanc chaud)
+export const HOVER_GLOW_POWER = 2; // courbe du dégradé : plus haut = glow plus concentré près du cadre
+// Contour net de survol (trait de quelques pixels, sans dégradé)
+export const HOVER_OUTLINE_WIDTH = 2; // épaisseur (pixels, constante à l'écran) ; 0 = pas de contour
+export const HOVER_OUTLINE_GAP = 0.02; // écart entre le cadre et le contour (m)
+export const HOVER_OUTLINE_OPACITY = 0.9; // opacité du contour au survol
+export const HOVER_OUTLINE_COLOR = 0xffffff; // couleur du contour
+export const HOVER_GLOW_SPEED = 10; // vitesse du fondu du glow (1/s)

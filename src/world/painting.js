@@ -14,6 +14,8 @@ import {
   LAMP_WIDTH,
 } from '../config.js';
 import { createFrame, resolveFrameStyle } from './frame.js';
+import { createGlow } from './glow.js';
+import { createOutline } from './outline.js';
 import { lampLightMaterial } from './materials.js';
 import { computeViewpoint } from './viewpoint.js';
 
@@ -27,10 +29,11 @@ async function loadTexture(src) {
   return texture;
 }
 
-// Taille de la toile : hauteur fixe, largeur selon le ratio, plafonnée à une
-// part de la largeur du mur, cadre compris (la hauteur est alors réduite).
-function fitSize(aspect, wallWidth, border) {
-  let height = PAINTING_HEIGHT;
+// Taille de la toile : hauteur de base × `scale` (1 par défaut), largeur selon
+// le ratio, plafonnée à une part de la largeur du mur, cadre compris (la hauteur
+// est alors réduite).
+function fitSize(aspect, wallWidth, border, scale) {
+  let height = PAINTING_HEIGHT * scale;
   let width = height * aspect;
   const maxWidth = wallWidth * PAINTING_MAX_WALL_RATIO - 2 * border;
   if (width > maxWidth) {
@@ -42,15 +45,7 @@ function fitSize(aspect, wallWidth, border) {
 
 // Toile (plan texturé), en léger retrait dans le trou du cadre
 function createCanvas(texture, width, height, frameDepth) {
-  // Émissive = la texture elle-même, intensité 0 au repos : le halo de survol
-  // (nav/highlight.js) éclaircit l'image sans la teinter.
-  const material = new THREE.MeshStandardMaterial({
-    map: texture,
-    roughness: 0.9,
-    emissive: 0xffffff,
-    emissiveMap: texture,
-    emissiveIntensity: 0,
-  });
+  const material = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.9 });
   const canvas = new THREE.Mesh(new THREE.PlaneGeometry(width, height), material);
   canvas.name = 'canvas';
   canvas.position.z = frameDepth - PAINTING_WALL_OFFSET - FRAME_CANVAS_RECESS;
@@ -91,7 +86,12 @@ export async function createPainting(data, wall, id, cellIndex) {
   const texture = await loadTexture(data.src);
   const aspect = texture.image.width / texture.image.height;
   const style = resolveFrameStyle(data.frame);
-  const { width: canvasWidth, height: canvasHeight } = fitSize(aspect, wall.width, style.border);
+  const { width: canvasWidth, height: canvasHeight } = fitSize(
+    aspect,
+    wall.width,
+    style.border,
+    data.scale ?? 1,
+  );
   // Dimensions cadre compris (point de vue, spot)
   const width = canvasWidth + 2 * style.border;
   const height = canvasHeight + 2 * style.border;
@@ -102,6 +102,8 @@ export async function createPainting(data, wall, id, cellIndex) {
     createCanvas(texture, canvasWidth, canvasHeight, style.depth),
     createFrame(canvasWidth, canvasHeight, style),
     createLamp(width, height, style.material),
+    createGlow(width, height),
+    createOutline(width, height),
   );
 
   const spot = createSpot(width, height, PAINTING_CENTER_HEIGHT);
