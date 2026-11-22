@@ -7,6 +7,7 @@ import { createRoom } from './world/room.js';
 import { createGallery } from './world/gallery.js';
 import { enableShadows } from './world/shadows.js';
 import { computePropPlacements, createProps } from './world/props.js';
+import { createRoomLights } from './world/roomLights.js';
 import { floorMaterial } from './world/materials.js';
 import { createNavigation } from './nav/navigation.js';
 import './ui/header.css';
@@ -104,6 +105,11 @@ async function init() {
   // Départ au centre de la cellule d'angle (première cellule)
   const camera = createCamera(room.cells[0].center);
 
+  // Spots allumés seulement dans la pièce courante ; ombres calculées une fois par pièce
+  const roomLights = createRoomLights(room, gallery.paintings);
+  roomLights.bake(renderer, scene, camera);
+  roomLights.update(camera);
+
   const navigation = createNavigation({
     canvas: renderer.domElement,
     camera,
@@ -112,7 +118,10 @@ async function init() {
   });
 
   setupResize(renderer, camera);
-  startLoop(renderer, scene, camera, navigation.update);
+  startLoop(renderer, scene, camera, (dt) => {
+    navigation.update(dt);
+    roomLights.update(camera);
+  });
 }
 
 init();

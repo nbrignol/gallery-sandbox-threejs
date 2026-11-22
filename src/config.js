@@ -1,7 +1,7 @@
 // Paramètres centralisés de la galerie. Unités : 1 unité = 1 mètre.
 
 // Nom affiché dans l'en-tête
-export const SITE_NAME = 'Galerie';
+export const SITE_NAME = 'Galerie ThreeJS';
 
 // Salle
 export const CELL_SIZE = 6; // côté d'une cellule carrée (m)
@@ -16,6 +16,9 @@ export const CEILING_GLOW = 0.35; // le plafond émet un peu de lumière (plafon
 export const TONE_EXPOSURE = 1; // exposition globale (tone mapping)
 export const ENV_INTENSITY = 0.4; // intensité de l'environnement (reflets et ambiance douce)
 export const FLOOR_ENV_INTENSITY = 0.12; // environnement sur le sol seulement : bas = pas de grand reflet brillant à angle rasant
+// Murs : teinte (le relief de la texture est conservé)
+export const WALL_COLOR = 0x6a6c6e; // teinte du mur, multipliée par la texture : blanc = texture telle quelle ; un gris sombre (ex. 0x3c3e40) donne un mur sombre qui garde son relief et réagit à la lumière
+export const WALL_BRIGHTNESS = 1; // facteur appliqué à cette teinte (1 = inchangé ; peut dépasser 1)
 export const FLOOR_SPECULAR = 0.3; // reflets du sol : 0 = parquet mat, sans aucun reflet ; 1 = brillance normale du matériau
 export const HEMI_INTENSITY = 0.5; // lumière d'ambiance hémisphérique
 export const HEMI_SKY_COLOR = 0xffffff; // ambiance : faces tournées vers le haut
@@ -61,7 +64,7 @@ export const PAINTING_MAX_WALL_RATIO = 0.7; // largeur max en part de la largeur
 export const PAINTING_WALL_OFFSET = 0.02; // décalage devant le mur (m)
 export const PAINTING_SCREEN_FILL = 0.65; // part de l'écran occupée par le tableau au point de vue
 export const PANEL_VIEW_SHIFT = 0.2; // décalage latéral du point de vue (part de la demi-largeur visible), pour laisser la place au panneau à droite
-export const PAINTING_SPOT_INTENSITY = 30; // intensité du spot (cd)
+export const PAINTING_SPOT_INTENSITY = 45; // intensité du spot (cd)
 export const PAINTING_SPOT_DISTANCE = 1.5; // distance du spot devant le mur (m)
 
 // Cadres (valeurs par défaut)

@@ -52,6 +52,5 @@ export function enableShadows(renderer, roomGroup, paintings, propsGroup) {
       object.receiveShadow = true;
     }
   });
-
-  renderer.shadowMap.needsUpdate = true; // une passe au prochain rendu
+  // Le calcul des cartes d'ombre est lancé par roomLights.bake() (une passe par pièce)
 }

@@ -1,5 +1,11 @@
 import * as THREE from 'three';
-import { CEILING_GLOW, FLOOR_SPECULAR, FRAME_COLOR } from '../config.js';
+import {
+  CEILING_GLOW,
+  FLOOR_SPECULAR,
+  FRAME_COLOR,
+  WALL_BRIGHTNESS,
+  WALL_COLOR,
+} from '../config.js';
 
 // Textures PBR (CC0 : Poly Haven, ambientCG) rangées dans public/textures/<dossier>/
 // color.jpg, normal.jpg (version GL), roughness.jpg.
@@ -65,8 +71,23 @@ export const floorMaterial = createPbrMaterial(FLOOR, THREE.MeshPhysicalMaterial
   specularIntensity: FLOOR_SPECULAR,
 });
 export const wallMaterial = createPbrMaterial(WALL);
+// Teinte du mur : multipliée par la texture (mur sombre = teinte grise foncée, le relief reste
+// et la lumière s'applique normalement).
+wallMaterial.color.set(WALL_COLOR).multiplyScalar(WALL_BRIGHTNESS);
 export const plinthBottomMaterial = createPbrMaterial(PLINTH_BOTTOM);
 export const plinthTopMaterial = createPbrMaterial(PLINTH_TOP);
+
+// BUDGET DE TEXTURES : un shader ne peut pas lire plus de 16 textures (MAX_TEXTURE_IMAGE_UNITS).
+// Chaque lampe ALLUMÉE qui projette des ombres en consomme une : les spots de la pièce
+// courante (voir roomLights.js) + les 3 lampes de cellule, auxquelles s'ajoutent les textures
+// du matériau (couleur, normales, AO, environnement…).
+// Sol, murs et plinthes sont des surfaces mates : on n'y garde pas la carte de rugosité
+// (une valeur fixe), ce qui libère 1 unité chacun. Si une pièce reçoit beaucoup de tableaux
+// (donc de spots allumés ensemble), vérifie ce budget.
+for (const material of [floorMaterial, wallMaterial, plinthBottomMaterial, plinthTopMaterial]) {
+  material.roughnessMap = null;
+  material.roughness = 0.9;
+}
 export const ceilingMaterial = new THREE.MeshStandardMaterial({
   color: 0xffffff,
   roughness: 1,
