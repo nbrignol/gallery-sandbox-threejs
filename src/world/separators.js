@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { CEILING_HEIGHT, CELL_SIZE, SEPARATOR_WIDTH } from '../config.js';
+import { setBakedAO } from './aoMaterial.js';
 import { WALL, wallMaterial } from './materials.js';
 
 // UV d'une boîte alignée sur les axes, en coordonnées monde (mètres / taille
@@ -21,6 +22,17 @@ function mapWorldBoxUV(geometry, center, textureSize) {
     uv.setXY(i, u / textureSize, v / textureSize);
   }
   uv.needsUpdate = true;
+}
+
+// UV1 d'une colonne : seulement la hauteur compte (dégradé bas / haut de l'AO)
+function mapColumnAoUV(geometry) {
+  const position = geometry.attributes.position;
+  const uv1 = new Float32Array(position.count * 2);
+  for (let i = 0; i < position.count; i++) {
+    uv1[2 * i] = 0.5;
+    uv1[2 * i + 1] = position.getY(i) / CEILING_HEIGHT + 0.5;
+  }
+  geometry.setAttribute('uv1', new THREE.BufferAttribute(uv1, 2));
 }
 
 // Coins de la salle : points de la grille (en demi-cellules) où deux murs se
@@ -54,15 +66,23 @@ function findCorners(cells) {
 // SEPARATOR_WIDTH de côté, sur toute la hauteur, centrées sur le coin
 // (la moitié dépasse dans la salle). Matériau et UV du mur.
 // Plus épaisses que les plinthes : leur face avant ne coïncide jamais avec celles-ci.
-export function createSeparators(cells) {
+export function createSeparators(cells, ao = null) {
   const group = new THREE.Group();
   if (SEPARATOR_WIDTH <= 0) return group;
 
+  // Avec l'AO : matériau commun aux séparateurs (copie du matériau du mur + AO en hauteur)
+  let material = wallMaterial;
+  if (ao) {
+    material = wallMaterial.clone();
+    setBakedAO(material, ao.columnTexture);
+  }
+
   for (const { vx, vz } of findCorners(cells)) {
     const geometry = new THREE.BoxGeometry(SEPARATOR_WIDTH, CEILING_HEIGHT, SEPARATOR_WIDTH);
-    const separator = new THREE.Mesh(geometry, wallMaterial);
+    const separator = new THREE.Mesh(geometry, material);
     separator.position.set((vx / 2) * CELL_SIZE, CEILING_HEIGHT / 2, (vz / 2) * CELL_SIZE);
     mapWorldBoxUV(geometry, separator.position, WALL.size);
+    if (ao) mapColumnAoUV(geometry);
     separator.name = `separator-${vx}-${vz}`;
     group.add(separator);
   }

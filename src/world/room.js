@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { CELL_SIZE, CEILING_HEIGHT } from '../config.js';
 import { SIDES, createCell } from './cell.js';
 import { createGlobalLight, createCellLight } from './lights.js';
+import { createBakedAO } from './ao.js';
 import { createSeparators } from './separators.js';
 
 // Une cellule existe-t-elle aux coordonnées de grille (i, j) ?
@@ -41,7 +42,8 @@ export function createRoom(cells) {
   const roomCells = [];
   const occluders = [];
 
-  group.add(createGlobalLight(), createSeparators(cells));
+  const ao = createBakedAO(cells);
+  group.add(createGlobalLight(), createSeparators(cells, ao));
 
   for (const [i, j] of cells) {
     const sides = getWallSides(cells, i, j);
@@ -50,6 +52,7 @@ export function createRoom(cells) {
       CELL_SIZE,
       sides.map((s) => s.name),
       origin,
+      ao,
     );
     cellGroup.position.set(origin.x, 0, origin.z);
     group.add(cellGroup, createCellLight(cellGroup.position.x, cellGroup.position.z));

@@ -28,6 +28,12 @@ export const SHADOW_BIAS = -0.0003; // décalage de profondeur (anti-acné) ; pl
 export const SHADOW_NORMAL_BIAS = 0.004; // décalage le long de la normale (m)
 export const SHADOW_RADIUS = 3; // douceur du bord des ombres
 
+// Occlusion ambiante « cuite » (dégradés sombres dans les coins, calculés au chargement)
+export const AO_STRENGTH = 0.6; // 0 = désactivée ; 1 = occlusion maximale au contact
+export const AO_COLOR = 0x000000; // couleur de l'ombre d'AO : noir = ombre neutre ; une teinte chaude (ex. 0x8a5a3c) donne une ombre plus douce
+export const AO_RADIUS = 0.8; // portée de l'assombrissement autour des coins et jonctions (m)
+export const AO_PIXELS_PER_METER = 64; // résolution des textures d'AO
+
 // Caméra
 export const EYE_HEIGHT = 1.6; // hauteur des yeux (m)
 export const CAMERA_FOV = 60; // FOV vertical (degrés) ; plus serré = moins de déformation, vue plus resserrée
