@@ -9,6 +9,7 @@ import {
 // Ombres portées des spots de tableaux (les « cônes »), calculées UNE SEULE FOIS.
 // - Projettent : le cadre de chaque tableau (pas l'applique : c'est la source).
 // - Reçoivent : la salle (sol, murs, plafond, plinthes, séparateurs) et les toiles.
+// - Les objets déco (banc, plantes) projettent et reçoivent.
 // Les lampes de cellule n'ont pas d'ombres (lumière d'appoint douce).
 // La scène étant statique, la carte d'ombre n'est pas recalculée à chaque image :
 // à relancer (`renderer.shadowMap.needsUpdate = true`) si quelque chose change
@@ -32,8 +33,9 @@ function setupPainting(painting) {
   setupSpotShadow(painting.getObjectByName('spot'));
 }
 
-// Active les ombres : `roomGroup` = groupe de la salle, `paintings` = groupes de tableaux
-export function enableShadows(renderer, roomGroup, paintings) {
+// Active les ombres : `roomGroup` = groupe de la salle, `paintings` = groupes de tableaux,
+// `propsGroup` = objets déco (banc, plantes)
+export function enableShadows(renderer, roomGroup, paintings, propsGroup) {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFShadowMap;
   renderer.shadowMap.autoUpdate = false; // calcul unique (voir needsUpdate ci-dessous)
@@ -42,6 +44,13 @@ export function enableShadows(renderer, roomGroup, paintings) {
     if (object.isMesh) object.receiveShadow = true;
   });
   paintings.forEach(setupPainting);
+  // Objets déco : projettent et reçoivent
+  propsGroup.traverse((object) => {
+    if (object.isMesh) {
+      object.castShadow = true;
+      object.receiveShadow = true;
+    }
+  });
 
   renderer.shadowMap.needsUpdate = true; // une passe au prochain rendu
 }

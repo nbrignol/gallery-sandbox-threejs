@@ -32,7 +32,17 @@ export const SHADOW_RADIUS = 3; // douceur du bord des ombres
 export const AO_STRENGTH = 0.6; // 0 = désactivée ; 1 = occlusion maximale au contact
 export const AO_COLOR = 0x000000; // couleur de l'ombre d'AO : noir = ombre neutre ; une teinte chaude (ex. 0x8a5a3c) donne une ombre plus douce
 export const AO_RADIUS = 0.8; // portée de l'assombrissement autour des coins et jonctions (m)
+export const AO_CONTACT_STRENGTH = 0.5; // assombrissement sous les objets posés au sol (ombre de contact)
 export const AO_PIXELS_PER_METER = 64; // résolution des textures d'AO
+
+// Objets déco (Poly Haven, public/models/) : banc au centre d'une pièce, plantes aux coins
+export const BENCH_MODEL = '/models/Ottoman_01/Ottoman_01_1k.gltf';
+export const PLANT_MODEL = '/models/potted_plant_02/potted_plant_02_1k.gltf';
+export const BENCH_SCALE = 1; // échelle du banc (1 = taille d'origine du modèle)
+export const PLANT_SCALE = 1; // échelle des plantes
+export const PLANT_CORNER_INSET = 0.5; // distance de la plante aux deux murs du coin (m)
+export const BENCH_CONTACT_RADIUS = 0.6; // rayon de l'ombre de contact du banc (m)
+export const PLANT_CONTACT_RADIUS = 0.5; // rayon de l'ombre de contact des plantes (m)
 
 // Caméra
 export const EYE_HEIGHT = 1.6; // hauteur des yeux (m)

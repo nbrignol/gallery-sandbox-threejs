@@ -62,5 +62,5 @@ export function createRoom(cells) {
     roomCells.push({ center, walls: sides.map((s) => getWallData(s, center)) });
   }
 
-  return { group, cells: roomCells, occluders };
+  return { group, cells: roomCells, occluders, ao };
 }

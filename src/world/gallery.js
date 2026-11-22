@@ -4,7 +4,7 @@ import { createPainting } from './painting.js';
 // Attribue les tableaux aux murs : le k-ième tableau d'une cellule va sur le
 // k-ième mur de sa liste. Tableaux en trop : ignorés (avertissement) ; murs
 // en trop : vides. Retourne une liste { data, wall, cellIndex } dans l'ordre de paintings.flat().
-function assignToWalls(room, paintingsByCell) {
+export function assignToWalls(room, paintingsByCell) {
   const jobs = [];
   paintingsByCell.forEach((items, cellIndex) => {
     const walls = room.cells[cellIndex]?.walls ?? [];

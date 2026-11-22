@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {
+  AO_CONTACT_STRENGTH,
   AO_PIXELS_PER_METER,
   AO_RADIUS,
   AO_STRENGTH,
@@ -120,7 +121,16 @@ function bakeFloorTexture(cells, walls, bounds) {
       return ao;
     },
   );
-  return toTexture(canvas);
+  return canvas;
+}
+
+// Copie d'un canvas
+function cloneCanvas(source) {
+  const copy = document.createElement('canvas');
+  copy.width = source.width;
+  copy.height = source.height;
+  copy.getContext('2d').drawImage(source, 0, 0);
+  return copy;
 }
 
 // Texture d'un mur : bas (sol), haut (plafond), et extrémités qui sont des coins concaves
@@ -181,14 +191,38 @@ export function createBakedAO(cells) {
     depth: (Math.max(...js) - Math.min(...js) + 1) * CELL_SIZE,
   };
 
-  const floorTexture = bakeFloorTexture(cells, walls, bounds);
+  // Sol et plafond partagent le même calcul de base, mais le plafond a sa propre
+  // copie : les ombres de contact des objets ne concernent que le sol.
+  const floorCanvas = bakeFloorTexture(cells, walls, bounds);
+  const floorTexture = toTexture(floorCanvas);
+  const ceilingTexture = toTexture(cloneCanvas(floorCanvas));
   setBakedAO(floorMaterial, floorTexture);
-  setBakedAO(ceilingMaterial, floorTexture);
-  ceilingMaterial.emissiveMap = floorTexture; // plafond surtout émissif : on module aussi l'émissive
+  setBakedAO(ceilingMaterial, ceilingTexture);
+  ceilingMaterial.emissiveMap = ceilingTexture; // plafond surtout émissif : on module aussi l'émissive
 
   const wallTextures = new Map();
   return {
     columnTexture: bakeColumnTexture(),
+    // Ombres de contact des objets posés au sol : `contacts` = [{ x, z, radius }]
+    // (monde, mètres). Un dégradé radial sombre est multiplié dans la texture du sol.
+    addContacts(contacts) {
+      const context = floorCanvas.getContext('2d');
+      const pxPerM = floorCanvas.width / bounds.width;
+      context.globalCompositeOperation = 'multiply';
+      for (const { x, z, radius } of contacts) {
+        const cx = (x - bounds.minX) * pxPerM;
+        const cy = (1 - (z - bounds.minZ) / bounds.depth) * floorCanvas.height;
+        const r = radius * pxPerM;
+        const dark = Math.round(255 * (1 - AO_CONTACT_STRENGTH));
+        const gradient = context.createRadialGradient(cx, cy, 0, cx, cy, r);
+        gradient.addColorStop(0, `rgb(${dark},${dark},${dark})`);
+        gradient.addColorStop(1, 'rgb(255,255,255)');
+        context.fillStyle = gradient;
+        context.fillRect(cx - r, cy - r, 2 * r, 2 * r);
+      }
+      context.globalCompositeOperation = 'source-over';
+      floorTexture.needsUpdate = true;
+    },
     floorUV: (x, z) => [(x - bounds.minX) / bounds.width, (z - bounds.minZ) / bounds.depth],
     wallTexture(origin, side) {
       const i = Math.round(origin.x / CELL_SIZE);

@@ -6,6 +6,7 @@ import { paintings as paintingsByCell } from './data/paintings.js';
 import { createRoom } from './world/room.js';
 import { createGallery } from './world/gallery.js';
 import { enableShadows } from './world/shadows.js';
+import { computePropPlacements, createProps } from './world/props.js';
 import { floorMaterial } from './world/materials.js';
 import { createNavigation } from './nav/navigation.js';
 import './ui/header.css';
@@ -91,8 +92,14 @@ async function init() {
   scene.add(room.group);
 
   const gallery = await createGallery(room, paintingsByCell);
-  scene.add(gallery.group);
-  enableShadows(renderer, room.group, gallery.paintings);
+
+  // Objets déco (banc, plantes) : emplacements d'abord, pour que l'AO du sol inclue
+  // leurs ombres de contact, puis chargement des modèles
+  const placements = computePropPlacements(room, paintingsByCell);
+  room.ao?.addContacts(placements);
+  const props = await createProps(placements);
+  scene.add(gallery.group, props);
+  enableShadows(renderer, room.group, gallery.paintings, props);
 
   // Départ au centre de la cellule d'angle (première cellule)
   const camera = createCamera(room.cells[0].center);
