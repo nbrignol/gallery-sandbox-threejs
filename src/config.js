@@ -61,8 +61,8 @@ export const PLANT_HITBOX_PADDING = 0.1; // marge de la boîte de clic invisible
 export const PLANT_CONTACT_RADIUS = 0.5; // rayon de l'ombre de contact des plantes (m)
 
 // Qualité (cases à cocher en bas à droite)
-export const MINIMAL_AMBIENT_BOOST = 1.5; // mode minimal : l'ambiance (hémisphère) est multipliée par ce facteur (spots éteints)
-export const SD_PIXEL_RATIO = 0.5; // mode SD : résolution interne = cette part de la taille de l'écran (le canvas est étiré)
+export const MINIMAL_AMBIENT_BOOST = 2.5; // mode minimal : l'ambiance (hémisphère) est multipliée par ce facteur (spots éteints)
+export const LOW_PIXEL_RATIO = 0.75; // mode Low : résolution interne = cette part de la taille de l'écran (le canvas est étiré)
 
 // Caméra
 export const EYE_HEIGHT = 1.6; // hauteur des yeux (m)

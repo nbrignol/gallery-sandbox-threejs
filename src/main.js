@@ -5,7 +5,7 @@ import {
   ENV_INTENSITY,
   EYE_HEIGHT,
   FLOOR_ENV_INTENSITY,
-  SD_PIXEL_RATIO,
+  LOW_PIXEL_RATIO,
   SCENE_BACKGROUND,
   SITE_NAME,
   START_CELL,
@@ -77,13 +77,13 @@ function createCamera(start) {
 }
 
 // Redimensionnement : renderer et caméra suivent la fenêtre.
-// Retourne `setSD(on)` : résolution interne réduite (SD) ou native (HD), canvas toujours étiré.
+// Retourne `setLow(on)` : résolution interne réduite (Low) ou native, canvas toujours étiré.
 function setupResize(renderer, camera, afterResize) {
-  let sd = false;
+  let low = false;
   function onResize() {
     const w = window.innerWidth;
     const h = window.innerHeight;
-    renderer.setPixelRatio(sd ? SD_PIXEL_RATIO : Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(low ? LOW_PIXEL_RATIO : Math.min(window.devicePixelRatio, 2));
     renderer.setSize(w, h, false); // la taille CSS est gérée par header.css
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
@@ -92,7 +92,7 @@ function setupResize(renderer, camera, afterResize) {
   window.addEventListener('resize', onResize);
   onResize();
   return (on) => {
-    sd = on;
+    low = on;
     onResize();
   };
 }
@@ -162,8 +162,8 @@ async function init() {
   navigation.look.setYaw(THREE.MathUtils.degToRad(START_YAW_DEG));
   navigation.playIntro();
 
-  const setSD = setupResize(renderer, camera, navigation.refitTopView);
-  setupQualityUI(createQuality({ renderer, scene, camera, roomLights, applyPixelRatio: setSD }));
+  const setLow = setupResize(renderer, camera, navigation.refitTopView);
+  setupQualityUI(createQuality({ renderer, scene, camera, roomLights, applyPixelRatio: setLow }));
   startLoop(renderer, scene, camera, (dt) => {
     navigation.update(dt);
     roomLights.update(camera);
