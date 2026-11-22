@@ -1,4 +1,5 @@
 import { AUTO_QUALITY_DURATION, AUTO_QUALITY_FPS } from '../config.js';
+import { showToast } from './toast.js';
 
 // Bascule automatique Normal → Minimal : on mesure le pic de FPS juste après le chargement (la 1re
 // fenêtre est ignorée : fondu du preloader, décodage). Si le pic reste sous le seuil, on passe en
@@ -21,6 +22,7 @@ export function createAutoQuality({ quality, checkbox }) {
       if (peak >= AUTO_QUALITY_FPS) return;
       checkbox.checked = true;
       quality.setMinimal(true);
+      showToast('Affichage allégé activé. Décochez « Minimal » pour revenir à la qualité normale.');
     },
   };
 }

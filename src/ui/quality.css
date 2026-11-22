@@ -55,3 +55,29 @@
   font-size: 0.9rem;
   pointer-events: none;
 }
+
+/* Toast : message éphémère centré en bas (ex. passage automatique en qualité minimale) */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 1rem);
+  z-index: 20;
+  box-sizing: border-box;
+  max-width: min(28rem, calc(100vw - 2rem));
+  padding: 0.6rem 1rem;
+  background: rgba(0, 0, 0, 0.85);
+  border-radius: 0.5rem;
+  color: #fff;
+  font-family: system-ui, sans-serif;
+  font-size: 0.9rem;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, 0.5rem);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.toast.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
