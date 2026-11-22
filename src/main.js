@@ -15,9 +15,8 @@ import {
   TONE_EXPOSURE,
   TOP_VIEW_BACKGROUND,
 } from './config.js';
-import { grid } from './data/layout.js';
+import { currentGalleryIndex, galleries, galleryHref } from './data/galleries.js';
 import { gridToCells } from './world/grid.js';
-import { paintings as paintingsByCell } from './data/paintings.js';
 import { createRoom } from './world/room.js';
 import { createGallery } from './world/gallery.js';
 import { enableShadows } from './world/shadows.js';
@@ -30,9 +29,23 @@ import { createFpsCounter } from './ui/fps.js';
 import './ui/header.css';
 import './ui/quality.css';
 
-// Affiche le nom dans l'en-tête
-function setupHeader() {
-  document.getElementById('site-name').textContent = SITE_NAME;
+// En-tête : le nom du site puis les numéros des configurations (« 1 - 2 - 3 »). Tous sont
+// soulignés et cliquables sauf l'actif.
+function setupHeader(activeIndex) {
+  document.getElementById('site-name').textContent = `${SITE_NAME} · `;
+  const nav = document.getElementById('galleries-nav');
+  galleries.forEach((gallery, index) => {
+    if (index > 0) nav.append(' - ');
+    const item = document.createElement(index === activeIndex ? 'span' : 'a');
+    item.textContent = String(index + 1);
+    if (index === activeIndex) {
+      item.setAttribute('aria-current', 'true');
+    } else {
+      item.href = galleryHref(index);
+      item.title = gallery.name;
+    }
+    nav.append(item);
+  });
 }
 
 // Renderer lié au canvas de la page
@@ -111,7 +124,10 @@ function startLoop(renderer, scene, camera, update) {
 }
 
 async function init() {
-  setupHeader();
+  const galleryIndex = currentGalleryIndex();
+  const config = galleries[galleryIndex];
+  const { grid, paintings: paintingsByCell } = config;
+  setupHeader(galleryIndex);
 
   const renderer = createRenderer();
   const scene = createScene(renderer);
@@ -130,8 +146,15 @@ async function init() {
   enableShadows(renderer, room.group, gallery.paintings, props);
 
   // Départ au centre de la cellule d'angle (première cellule)
-  const startCenter = room.cells[START_CELL].center;
-  const camera = createCamera({ x: startCenter.x + START_OFFSET_X, z: startCenter.z + START_OFFSET_Z });
+  // (la configuration peut surcharger le départ : cellule, décalage, orientation)
+  const start = config.start ?? {};
+  const startCell = room.cells[start.cell ?? START_CELL];
+  if (!startCell) throw new Error(`Configuration « ${config.name} » : cellule de départ inexistante.`);
+  const startCenter = startCell.center;
+  const camera = createCamera({
+    x: startCenter.x + (start.offsetX ?? START_OFFSET_X),
+    z: startCenter.z + (start.offsetZ ?? START_OFFSET_Z),
+  });
 
   // Vue du dessus : spots éteints (rallumés dans la pièce de destination au retour), fond noir
   // hors du bâtiment. Les plafonds ne sont pas touchés.
@@ -159,7 +182,7 @@ async function init() {
   });
 
   // Départ orienté, puis micro-animation droite / gauche
-  navigation.look.setYaw(THREE.MathUtils.degToRad(START_YAW_DEG));
+  navigation.look.setYaw(THREE.MathUtils.degToRad(start.yawDeg ?? START_YAW_DEG));
   navigation.playIntro();
 
   const setLow = setupResize(renderer, camera, navigation.refitTopView);

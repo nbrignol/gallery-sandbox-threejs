@@ -29,7 +29,7 @@ canvas#scene.is-top-view {
 }
 
 /* En-tête en overlay : pastille noire alignée à gauche, à 1rem des bords de l'écran,
-   sans bloquer les clics derrière (hauteur ≈ 3 rem : le panneau est placé en dessous) */
+   sans bloquer les clics derrière (sauf les numéros de configuration) ; hauteur ≈ 3 rem : le panneau est placé en dessous */
 header {
   position: fixed;
   top: calc(env(safe-area-inset-top) + 1rem);
@@ -45,5 +45,14 @@ header {
   font-family: system-ui, sans-serif;
   font-size: 1.25rem;
   letter-spacing: 0.08em;
-  pointer-events: none;
+  pointer-events: none; /* seuls les numéros cliquables captent la souris */
+  user-select: none;
+}
+
+/* Numéros des configurations : soulignés et cliquables, sauf l'actif */
+#galleries-nav a {
+  color: inherit;
+  pointer-events: auto;
+  cursor: pointer;
+  text-decoration: underline;
 }

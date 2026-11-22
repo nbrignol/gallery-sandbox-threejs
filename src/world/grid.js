@@ -1,7 +1,7 @@
-// Convertit la grille de layout.js (matrice de 0 / 1) en liste de cellules `[i, j]`
+// Convertit la grille d'une configuration (data/galleries.js) (matrice de 0 / 1) en liste de cellules `[i, j]`
 // (i = colonne, j = ligne), dans l'ordre de lecture : ligne par ligne, de gauche à
 // droite et de haut en bas. Cet ordre donne l'index de chaque cellule, utilisé par
-// data/paintings.js (le n-ième groupe va à la n-ième cellule) et START_CELL.
+// les tableaux de la configuration (le n-ième groupe va à la n-ième cellule) et START_CELL.
 //
 // - Une valeur « vraie » (1) = cellule de salle ; 0 = vide.
 // - Les lignes peuvent avoir des longueurs différentes : les cases manquantes valent 0.
@@ -49,8 +49,8 @@ function warnIfDisconnected(cells) {
   }
 }
 
-// Mode dev : correspondance index → cellule, pour remplir paintings.js
+// Mode dev : correspondance index → cellule, pour remplir `paintings`
 function logIndexMapping(cells) {
-  const lines = cells.map(([i, j], k) => `  groupe ${k} de paintings.js → colonne ${i}, ligne ${j}`);
+  const lines = cells.map(([i, j], k) => `  groupe ${k} de paintings → colonne ${i}, ligne ${j}`);
   console.info(`layout : ${cells.length} cellule(s)\n${lines.join('\n')}`);
 }

@@ -13,7 +13,7 @@ import {
 } from '../config.js';
 import { assignToWalls } from './gallery.js';
 
-// Objets déco posés selon les champs des tableaux (data/paintings.js) :
+// Objets déco posés selon les champs des tableaux (data/artworks.js, data/galleries.js) :
 //  - bench        : un banc au centre de la pièce, face au tableau ;
 //  - right_plant  : une plante dans le coin à droite du mur du tableau ;
 //  - left_plant   : une plante dans le coin à gauche (« droite » et « gauche » vus
