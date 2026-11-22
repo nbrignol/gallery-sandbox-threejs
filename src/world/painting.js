@@ -14,6 +14,7 @@ import {
   LAMP_WIDTH,
 } from '../config.js';
 import { createFrame, resolveFrameStyle } from './frame.js';
+import { lampLightMaterial } from './materials.js';
 import { computeViewpoint } from './viewpoint.js';
 
 const loader = new THREE.TextureLoader();
@@ -57,11 +58,13 @@ function createCanvas(texture, width, height, frameDepth) {
 }
 
 // Petite boîte au-dessus du cadre qui figure la lampe du tableau (décor : la
-// lumière vient du spot). Matériau du cadre, dos contre le mur.
-// `height` : hauteur du tableau cadre compris.
+// lumière vient du spot). Matériau du cadre, sauf le dessous (blanc, simule la
+// lumière) ; dos contre le mur. `height` : hauteur du tableau cadre compris.
 function createLamp(width, height, material) {
   const lampWidth = Math.min(LAMP_WIDTH, width * 0.6);
-  const lamp = new THREE.Mesh(new THREE.BoxGeometry(lampWidth, LAMP_HEIGHT, LAMP_DEPTH), material);
+  // Ordre des faces d'un BoxGeometry : +X, -X, +Y, -Y (dessous), +Z, -Z
+  const materials = [material, material, material, lampLightMaterial, material, material];
+  const lamp = new THREE.Mesh(new THREE.BoxGeometry(lampWidth, LAMP_HEIGHT, LAMP_DEPTH), materials);
   lamp.name = 'lamp';
   lamp.position.set(
     0,

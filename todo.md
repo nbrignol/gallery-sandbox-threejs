@@ -11,6 +11,9 @@
 - [ ] **Textures : tailles réelles estimées** : les motifs de `concrete048` et des enduits `plaster00*` sont estimés à 2 m (`WALL.size`, `FLOOR.size` dans `src/world/materials.js`) : ambientCG ne donne pas leur taille réelle. À ajuster à l'œil.
 - [ ] **Textures : poids** : 26 Mo de JPG 1K dans `public/textures/` pour tester les variantes. Ne garder que celles retenues à la fin.
 
+- [ ] **AO « cuite »** (occlusion ambiante dans les coins) : à faire après les ombres. Voir la discussion : `aoMap` générée une fois au chargement (second jeu d'UV), de préférence à un GTAO temps réel.
+- [ ] **Ombres : à étendre ?** Pour l'instant seuls le cadre et la lampe projettent. Plinthes et séparateurs ne projettent pas (leurs ombres seraient très discrètes sous les spots).
+
 ## Idées
 
 - [ ] **Passage entre les tableaux 5 et 6 (traversée des murs)** : le déplacement en ligne droite traverse l'angle rentrant. Piste : un fondu (au noir ou en transparence) pendant la traversée. À trancher : fondu, ou contournement de l'angle (actuellement hors périmètre dans le plan).

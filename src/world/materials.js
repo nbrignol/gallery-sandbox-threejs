@@ -68,6 +68,9 @@ export const ceilingMaterial = new THREE.MeshStandardMaterial({
   emissiveIntensity: CEILING_GLOW,
 });
 
+// Dessous de l'applique : blanc pur non éclairé, pour simuler la source lumineuse
+export const lampLightMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
 // Cadre : bois sombre mat (couleur unie : le grain serait mal orienté par
 // ExtrudeGeometry). Surchargeable par tableau (voir frame.js).
 export function createFrameMaterial(color = FRAME_COLOR) {

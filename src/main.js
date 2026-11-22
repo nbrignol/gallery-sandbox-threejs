@@ -1,10 +1,12 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { CAMERA_FOV, ENV_INTENSITY, EYE_HEIGHT, SITE_NAME, TONE_EXPOSURE } from './config.js';
+import { CAMERA_FOV, ENV_INTENSITY, EYE_HEIGHT, FLOOR_ENV_INTENSITY, SITE_NAME, TONE_EXPOSURE } from './config.js';
 import { cells } from './data/layout.js';
 import { paintings as paintingsByCell } from './data/paintings.js';
 import { createRoom } from './world/room.js';
 import { createGallery } from './world/gallery.js';
+import { enableShadows } from './world/shadows.js';
+import { floorMaterial } from './world/materials.js';
 import { createNavigation } from './nav/navigation.js';
 import './ui/header.css';
 
@@ -34,6 +36,12 @@ function createScene(renderer) {
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
   scene.environmentIntensity = ENV_INTENSITY;
   pmrem.dispose();
+
+  // Le sol, très lisse, reflèterait les panneaux lumineux de l'environnement en
+  // grand reflet à angle rasant : on lui donne son propre envMap, bien plus faible
+  // (scene.environmentIntensity est global, il ne s'applique pas matériau par matériau).
+  floorMaterial.envMap = scene.environment;
+  floorMaterial.envMapIntensity = FLOOR_ENV_INTENSITY;
   return scene;
 }
 
@@ -84,6 +92,7 @@ async function init() {
 
   const gallery = await createGallery(room, paintingsByCell);
   scene.add(gallery.group);
+  enableShadows(renderer, room.group, gallery.paintings);
 
   // Départ au centre de la cellule d'angle (première cellule)
   const camera = createCamera(room.cells[0].center);

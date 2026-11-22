@@ -15,15 +15,22 @@ export const PLINTH_DEPTH = 0.03; // relief : épaisseur des plinthes devant le 
 export const CEILING_GLOW = 0.35; // le plafond émet un peu de lumière (plafond lumineux, évite le gris terne)
 export const TONE_EXPOSURE = 1; // exposition globale (tone mapping)
 export const ENV_INTENSITY = 0.4; // intensité de l'environnement (reflets et ambiance douce)
+export const FLOOR_ENV_INTENSITY = 0.12; // environnement sur le sol seulement : bas = pas de grand reflet brillant à angle rasant
 export const HEMI_INTENSITY = 0.5; // lumière d'ambiance hémisphérique
 export const HEMI_SKY_COLOR = 0xffffff; // ambiance : faces tournées vers le haut
 export const HEMI_GROUND_COLOR = 0xd9d2c7; // ambiance : faces tournées vers le bas (plafond)
 export const CELL_LIGHT_INTENSITY = 5; // lampe douce de chaque cellule (cd)
 export const CELL_LIGHT_DROP = 1.2; // distance sous le plafond de la lampe (m) : plus bas = point chaud moins fort au plafond
 
+// Ombres des spots de tableaux (calculées une seule fois)
+export const SHADOW_MAP_SIZE = 1024; // résolution de la carte d'ombre de chaque spot
+export const SHADOW_BIAS = -0.0003; // décalage de profondeur (anti-acné) ; plus négatif = moins d'acné mais ombres décollées
+export const SHADOW_NORMAL_BIAS = 0.004; // décalage le long de la normale (m)
+export const SHADOW_RADIUS = 3; // douceur du bord des ombres
+
 // Caméra
 export const EYE_HEIGHT = 1.6; // hauteur des yeux (m)
-export const CAMERA_FOV = 72; // FOV vertical (degrés)
+export const CAMERA_FOV = 60; // FOV vertical (degrés) ; plus serré = moins de déformation, vue plus resserrée
 
 // Tableaux (valeurs par défaut)
 export const PAINTING_HEIGHT = 1; // hauteur de toile (m)
