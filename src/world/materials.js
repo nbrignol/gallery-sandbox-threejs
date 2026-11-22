@@ -41,10 +41,22 @@ export const PLINTH_TOP = { folder: 'plaster002', size: 2 };
 
 const loader = new THREE.TextureLoader();
 
+// Suivi du chargement des textures de la salle (modale de chargement) : une promesse par carte,
+// résolue à la fin du téléchargement (réussi ou non)
+const pending = [];
+export const roomTextureCount = () => pending.length;
+// `callback` est appelé une fois par texture chargée ; retourne une promesse résolue quand toutes le sont
+export function onRoomTextureLoaded(callback) {
+  pending.forEach((promise) => promise.then(callback));
+  return Promise.all(pending);
+}
+
 // Charge une carte : répétition activée ; la couleur est en sRGB, la normal
 // map et la rugosité restent en espace linéaire (défaut).
 function loadMap(folder, file, isColor = false) {
-  const texture = loader.load(`${import.meta.env.BASE_URL}textures/${folder}/${file}`);
+  let settle;
+  pending.push(new Promise((resolve) => (settle = resolve)));
+  const texture = loader.load(`${import.meta.env.BASE_URL}textures/${folder}/${file}`, settle, undefined, settle);
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
   texture.anisotropy = 8;

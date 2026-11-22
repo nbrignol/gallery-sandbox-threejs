@@ -32,10 +32,15 @@ function numberInRooms(paintings) {
 // Crée tous les tableaux de la salle.
 // Retourne { group, paintings } : `group` à ajouter à la scène, `paintings` la
 // liste des groupes de tableaux (index = userData.paintingId).
-export async function createGallery(room, paintingsByCell) {
+// `onProgress()` est appelé à chaque image chargée.
+export async function createGallery(room, paintingsByCell, onProgress) {
   const jobs = assignToWalls(room, paintingsByCell);
   const paintings = await Promise.all(
-    jobs.map(({ data, wall, cellIndex }, id) => createPainting(data, wall, id, cellIndex)),
+    jobs.map(async ({ data, wall, cellIndex }, id) => {
+      const painting = await createPainting(data, wall, id, cellIndex);
+      onProgress?.();
+      return painting;
+    }),
   );
 
   numberInRooms(paintings);

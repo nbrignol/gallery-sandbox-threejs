@@ -18,14 +18,15 @@ import {
 import { currentGalleryIndex, galleries, galleryHref } from './data/galleries.js';
 import { gridToCells } from './world/grid.js';
 import { createRoom } from './world/room.js';
-import { createGallery } from './world/gallery.js';
+import { assignToWalls, createGallery } from './world/gallery.js';
 import { enableShadows } from './world/shadows.js';
-import { computePropPlacements, createProps } from './world/props.js';
+import { computePropPlacements, countPropModels, createProps } from './world/props.js';
 import { createRoomLights } from './world/roomLights.js';
-import { floorMaterial } from './world/materials.js';
+import { floorMaterial, onRoomTextureLoaded, roomTextureCount } from './world/materials.js';
 import { createNavigation } from './nav/navigation.js';
 import { createQuality, setupQualityUI } from './world/quality.js';
 import { createFpsCounter } from './ui/fps.js';
+import { createLoadingSteps, paint } from './ui/loading.js';
 import './ui/header.css';
 import './ui/quality.css';
 
@@ -129,19 +130,45 @@ async function init() {
   const { grid, paintings: paintingsByCell } = config;
   setupHeader(galleryIndex);
 
+  // Étapes affichées dans la modale de chargement
+  const steps = createLoadingSteps(document.getElementById('loading-steps'));
+  const roomStep = steps.add('Construction de la salle');
+  const textureStep = steps.add('Téléchargement des textures', roomTextureCount());
+  const paintingStep = steps.add('Téléchargement des tableaux');
+  const modelStep = steps.add('Téléchargement des modèles 3D');
+  const shadowStep = steps.add('Calcul des ombres');
+  await paint();
+
   const renderer = createRenderer();
   const scene = createScene(renderer);
 
+  roomStep.start();
+  await paint();
   const room = createRoom(gridToCells(grid));
   scene.add(room.group);
+  roomStep.done();
 
-  const gallery = await createGallery(room, paintingsByCell);
-
-  // Objets déco (banc, plantes) : emplacements d'abord, pour que l'AO du sol inclue
-  // leurs ombres de contact, puis chargement des modèles
+  // Objets déco (banc, plantes) : emplacements d'abord (ils ne dépendent que des données), pour
+  // que l'AO du sol inclue leurs ombres de contact
   const placements = computePropPlacements(room, paintingsByCell);
   room.ao?.addContacts(placements);
-  const props = await createProps(placements);
+
+  // Textures, tableaux et modèles se téléchargent en parallèle
+  paintingStep.setTotal(assignToWalls(room, paintingsByCell).length);
+  const modelTotal = countPropModels(placements);
+  if (modelTotal > 0) modelStep.setTotal(modelTotal);
+  else modelStep.remove();
+  const [gallery, props] = await Promise.all([
+    createGallery(room, paintingsByCell, paintingStep.tick).then((result) => {
+      paintingStep.done();
+      return result;
+    }),
+    createProps(placements, modelStep.tick).then((result) => {
+      modelStep.done();
+      return result;
+    }),
+    onRoomTextureLoaded(textureStep.tick).then(() => textureStep.done()),
+  ]);
   scene.add(gallery.group, props);
   enableShadows(renderer, room.group, gallery.paintings, props);
 
@@ -167,7 +194,10 @@ async function init() {
 
   // Spots allumés seulement dans la pièce courante ; ombres calculées une fois par pièce
   const roomLights = createRoomLights(room, gallery.paintings);
+  shadowStep.start();
+  await paint();
   roomLights.bake(renderer, scene, camera);
+  shadowStep.done();
   roomLights.update(camera);
 
   const navigation = createNavigation({
@@ -200,4 +230,11 @@ function hidePreloader() {
   setTimeout(() => preloader.remove(), 500);
 }
 
-init().then(hidePreloader);
+// Erreur de chargement : la modale reste affichée avec un message
+function showError(error) {
+  console.error(error);
+  const title = document.querySelector('.preloader-title');
+  if (title) title.textContent = 'Erreur de chargement';
+}
+
+init().then(hidePreloader, showError);

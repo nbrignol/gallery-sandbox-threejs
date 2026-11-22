@@ -104,16 +104,26 @@ function createHitBoxFactory(model, padding) {
   };
 }
 
+// Nombre de modèles à charger pour ces emplacements (un par type : banc, plante)
+export function countPropModels(placements) {
+  return new Set(placements.map((p) => p.type)).size;
+}
+
 // Crée les objets aux emplacements donnés. Retourne le groupe à ajouter à la scène.
-export async function createProps(placements) {
+// `onProgress()` est appelé à chaque modèle chargé.
+export async function createProps(placements, onProgress) {
   const group = new THREE.Group();
   if (placements.length === 0) return group;
 
   const loader = new GLTFLoader();
   const needed = new Set(placements.map((p) => p.type));
+  const tick = (model) => {
+    onProgress?.();
+    return model;
+  };
   const [bench, plant] = await Promise.all([
-    needed.has('bench') ? loadModel(loader, BENCH_MODEL, BENCH_SCALE) : null,
-    needed.has('plant') ? loadModel(loader, PLANT_MODEL, PLANT_SCALE) : null,
+    needed.has('bench') ? loadModel(loader, BENCH_MODEL, BENCH_SCALE).then(tick) : null,
+    needed.has('plant') ? loadModel(loader, PLANT_MODEL, PLANT_SCALE).then(tick) : null,
   ]);
   const models = { bench, plant };
   const plantHitBox = plant ? createHitBoxFactory(plant, PLANT_HITBOX_PADDING) : null;

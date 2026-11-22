@@ -8,7 +8,7 @@
     />
     <title>Galerie</title>
     <style>
-      /* Preloader : en ligne pour s'afficher avant le chargement du JS */
+      /* Preloader : modale centrée sur un voile (en ligne pour s'afficher avant le chargement du JS) */
       #preloader {
         position: fixed;
         inset: 0;
@@ -16,16 +16,48 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #111;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
         color: #fff;
         font-family: system-ui, sans-serif;
-        font-size: 1.25rem;
-        letter-spacing: 0.08em;
         transition: opacity 0.4s ease;
       }
       #preloader.is-done {
         opacity: 0;
         pointer-events: none;
+      }
+      .preloader-modal {
+        box-sizing: border-box;
+        width: min(24rem, calc(100vw - 2rem));
+        padding: 1.5rem;
+        background: #000;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+      }
+      .preloader-title {
+        margin: 0;
+        font-size: 1.25rem;
+        letter-spacing: 0.08em;
+      }
+      #loading-steps {
+        margin: 1rem 0 0;
+        padding: 0;
+        list-style: none;
+        font-size: 0.95rem;
+        line-height: 1.7;
+      }
+      #loading-steps li::before {
+        display: inline-block;
+        width: 1.5em;
+      }
+      #loading-steps .is-pending {
+        opacity: 0.4;
+      }
+      #loading-steps .is-pending::before { content: '○'; }
+      #loading-steps .is-active::before { content: '…'; }
+      #loading-steps .is-done::before { content: '✓'; }
+      #loading-steps .is-done {
+        opacity: 0.7;
       }
       /* Les points ont une largeur fixe : le texte ne bouge pas pendant l'animation */
       #preloader .dots {
@@ -46,7 +78,12 @@
     </style>
   </head>
   <body>
-    <div id="preloader">Chargement en cours<span class="dots"></span></div>
+    <div id="preloader">
+      <div class="preloader-modal" role="dialog" aria-live="polite" aria-label="Chargement">
+        <p class="preloader-title">Chargement en cours<span class="dots"></span></p>
+        <ul id="loading-steps"></ul>
+      </div>
+    </div>
     <canvas id="scene"></canvas>
     <header>
       <span id="site-name"></span><span id="galleries-nav"></span>
