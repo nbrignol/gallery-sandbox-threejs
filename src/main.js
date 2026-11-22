@@ -27,6 +27,7 @@ import { createNavigation } from './nav/navigation.js';
 import { createQuality, setupQualityUI } from './world/quality.js';
 import { createDebug } from './world/debug.js';
 import { createFpsCounter } from './ui/fps.js';
+import { createAutoQuality } from './ui/autoQuality.js';
 import { createLoadingSteps, paint } from './ui/loading.js';
 import './ui/header.css';
 import './ui/quality.css';
@@ -113,8 +114,8 @@ function setupResize(renderer, camera, afterResize) {
 }
 
 // Boucle de rendu ; `update(dt)` est appelée à chaque image
-function startLoop(renderer, scene, camera, update) {
-  const fps = createFpsCounter(document.getElementById('fps'));
+function startLoop(renderer, scene, camera, update, onFpsSample) {
+  const fps = createFpsCounter(document.getElementById('fps'), onFpsSample);
   const timer = new THREE.Timer();
   timer.connect(document); // met le timer en pause quand l'onglet est masqué
   renderer.setAnimationLoop((time) => {
@@ -217,7 +218,9 @@ async function init() {
   navigation.playIntro();
 
   const setLow = setupResize(renderer, camera, navigation.refitTopView);
-  setupQualityUI(createQuality({ renderer, scene, camera, roomLights, applyPixelRatio: setLow }));
+  const quality = createQuality({ renderer, scene, camera, roomLights, applyPixelRatio: setLow });
+  setupQualityUI(quality);
+  const autoQuality = createAutoQuality({ quality, checkbox: document.getElementById('opt-minimal') });
   const debug = createDebug({
     scene,
     room,
@@ -233,7 +236,7 @@ async function init() {
     navigation.update(dt);
     roomLights.update(camera);
     debug.update();
-  });
+  }, autoQuality.onSample);
 }
 
 // Retire le preloader (fondu, puis suppression du DOM)

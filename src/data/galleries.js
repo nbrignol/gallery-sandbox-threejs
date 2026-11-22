@@ -77,7 +77,6 @@ export const galleries = [
       [art('joconde', {bench: true, left_plant: true }), art('venus', {right_plant: true})], 
       [art('vague', { right_plant: true }), art('baiser', { bench: true, right_plant: true })],
       [art('cri', { left_plant: true }), null, art('nuit', {right_plant: true, bench: true})], 
-      //[art('cri', { left_plant: true }, art('nuit', { bench: true }))],
       [null, null, art('perle', { bench: true, right_plant: true })],
     ],
   },

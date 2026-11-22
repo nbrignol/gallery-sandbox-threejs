@@ -114,6 +114,11 @@ export const INTRO_DELAY = 0.8; // attente avant de commencer (s)
 export const INTRO_DURATION = 3.6; // durée de l'aller-retour (s)
 export const INTRO_SWEEP_DEG = 5; // amplitude de chaque côté (degrés)
 
+// Qualité automatique : on démarre en Normal ; si le pic de FPS mesuré juste après le
+// chargement reste sous le seuil, on bascule en Minimal
+export const AUTO_QUALITY_FPS = 29; // seuil (strictement inférieur)
+export const AUTO_QUALITY_DURATION = 2.5; // fenêtre de mesure (s), 1re demi-seconde ignorée
+
 // Navigation
 export const LOOK_SENSITIVITY = 0.0015; // rotation (rad) par pixel de glisser (0.004 = trop sensible ; plus bas = plus lent)
 export const CLICK_MAX_MOVE = 5; // en deçà (px), un appui-relâchement est un clic

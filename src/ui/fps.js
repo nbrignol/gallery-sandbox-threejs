@@ -1,5 +1,6 @@
-// Compteur d'images par seconde : moyenne sur une demi-seconde, affichée dans `element`
-export function createFpsCounter(element) {
+// Compteur d'images par seconde : moyenne sur une demi-seconde, affichée dans `element`.
+// `onSample(fps)` (facultatif) est appelé à chaque fenêtre mesurée.
+export function createFpsCounter(element, onSample) {
   let frames = 0;
   let start = null;
   return {
@@ -9,7 +10,9 @@ export function createFpsCounter(element) {
       frames++;
       const elapsed = time - start;
       if (elapsed < 500) return;
-      element.textContent = `${Math.round((frames * 1000) / elapsed)} FPS`;
+      const fps = (frames * 1000) / elapsed;
+      element.textContent = `${Math.round(fps)} FPS`;
+      onSample?.(fps);
       frames = 0;
       start = time;
     },
