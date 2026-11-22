@@ -23,7 +23,12 @@ export const FLOOR_SPECULAR = 0.3; // reflets du sol : 0 = parquet mat, sans auc
 export const HEMI_INTENSITY = 0.5; // lumière d'ambiance hémisphérique
 export const HEMI_SKY_COLOR = 0xffffff; // ambiance : faces tournées vers le haut
 export const HEMI_GROUND_COLOR = 0xd9d2c7; // ambiance : faces tournées vers le bas (plafond)
-export const ROOM_ONLY_CELL_LIGHTS = false; // true : seule la lampe de la pièce courante est allumée (comme les spots) ; false : toutes les lampes de cellule restent allumées
+// Lampes de cellule : 'room+neighbors' = seules sont allumées la lampe de la pièce courante et
+// celles des pièces directement connectées (voisines par un côté) ; 'all' = toutes allumées
+// (ne convient qu'aux petits bâtiments : chaque lampe allumée consomme une texture du shader).
+export const CELL_LIGHT_SCOPE = 'room+neighbors';
+export const CELL_SHADOW_MAX_CELLS = 12; // au-delà de ce nombre de cellules, les lampes ne projettent plus d'ombres (≈ 6 Mo de carte d'ombre par lampe)
+export const TOP_VIEW_AMBIENT_BOOST = 2.2; // en vue du dessus, l'ambiance (hémisphère) est multipliée par ce facteur : toutes les lampes ne sont pas allumées
 export const CELL_LIGHT_INTENSITY = 5; // lampe douce de chaque cellule (cd)
 export const CELL_LIGHT_DROP = 1.2; // distance sous le plafond de la lampe (m) : plus bas = point chaud moins fort au plafond
 
@@ -42,6 +47,7 @@ export const AO_STRENGTH = 0.6; // 0 = désactivée ; 1 = occlusion maximale au 
 export const AO_COLOR = 0x000000; // couleur de l'ombre d'AO : noir = ombre neutre ; une teinte chaude (ex. 0x8a5a3c) donne une ombre plus douce
 export const AO_RADIUS = 0.8; // portée de l'assombrissement autour des coins et jonctions (m)
 export const AO_CONTACT_STRENGTH = 0.5; // assombrissement sous les objets posés au sol (ombre de contact)
+export const AO_MAX_TEXTURE_SIZE = 2048; // taille max (px) de la texture d'AO du sol : sur un grand bâtiment, la résolution par mètre diminue
 export const AO_PIXELS_PER_METER = 64; // résolution des textures d'AO
 
 // Objets déco (Poly Haven, public/models/) : banc au centre d'une pièce, plantes aux coins

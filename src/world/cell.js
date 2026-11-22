@@ -5,7 +5,6 @@ import {
   PLINTH_DEPTH,
   PLINTH_TOP_HEIGHT,
 } from '../config.js';
-import { setBakedAO } from './aoMaterial.js';
 import {
   FLOOR,
   PLINTH_BOTTOM,
@@ -99,12 +98,8 @@ function createWall(size, side, origin, ao) {
   if (ao) geometry.setAttribute('uv1', geometry.attributes.uv.clone());
   const along = alongOrigin(side, origin);
   mapUV(geometry, (x, y) => [(along + x) / WALL.size, (y + CEILING_HEIGHT / 2) / WALL.size]);
-  // Avec l'AO, matériau propre au mur (copie du matériau partagé + sa texture d'AO)
-  let material = wallMaterial;
-  if (ao) {
-    material = wallMaterial.clone();
-    setBakedAO(material, ao.wallTexture(origin, side));
-  }
+  // Avec l'AO : copie du matériau du mur portant la texture d'AO de ce mur (partagée par variante)
+  const material = ao ? ao.wallMaterialFor(wallMaterial, origin, side) : wallMaterial;
   const wall = new THREE.Mesh(geometry, material);
   // Le mur est à size/2 du centre, à l'opposé de sa normale intérieure
   wall.position.set((-nx * size) / 2, CEILING_HEIGHT / 2, (-nz * size) / 2);
@@ -157,8 +152,7 @@ function createPlinth(size, side, origin, ao, { name, height, bottom, preset, ma
   // donc l'assombrissement se prolonge sans coupure du mur à la plinthe
   if (ao) {
     mapWallAoUV(geometry, size, bottom + height / 2);
-    material = material.clone();
-    setBakedAO(material, ao.wallTexture(origin, side));
+    material = ao.wallMaterialFor(material, origin, side);
   }
   const plinth = new THREE.Mesh(geometry, material);
   const offset = size / 2 - PLINTH_DEPTH / 2; // centre de la boîte, devant le mur

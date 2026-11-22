@@ -14,7 +14,8 @@ import {
   TONE_EXPOSURE,
   TOP_VIEW_BACKGROUND,
 } from './config.js';
-import { cells } from './data/layout.js';
+import { grid } from './data/layout.js';
+import { gridToCells } from './world/grid.js';
 import { paintings as paintingsByCell } from './data/paintings.js';
 import { createRoom } from './world/room.js';
 import { createGallery } from './world/gallery.js';
@@ -103,7 +104,7 @@ async function init() {
   const renderer = createRenderer();
   const scene = createScene(renderer);
 
-  const room = createRoom(cells);
+  const room = createRoom(gridToCells(grid));
   scene.add(room.group);
 
   const gallery = await createGallery(room, paintingsByCell);

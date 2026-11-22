@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { CEILING_HEIGHT, CELL_SIZE, SEPARATOR_WIDTH } from '../config.js';
 import { setBakedAO } from './aoMaterial.js';
+import { cellLookup } from './cellLookup.js';
 import { WALL, wallMaterial } from './materials.js';
 
 // UV d'une boîte alignée sur les axes, en coordonnées monde (mètres / taille
@@ -40,7 +41,7 @@ function mapColumnAoUV(geometry) {
 // à 90° dans la salle) ou 3 (angle rentrant du L) ; 2 en diagonale ; 2 côte à
 // côte = mur droit, 4 = intérieur : pas de coin.
 function findCorners(cells) {
-  const has = (i, j) => cells.some(([ci, cj]) => ci === i && cj === j);
+  const has = cellLookup(cells);
   const corners = new Map();
   for (const [i, j] of cells) {
     for (const sx of [-1, 1]) {

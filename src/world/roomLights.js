@@ -1,25 +1,21 @@
-import { CELL_SIZE, ROOM_ONLY_CELL_LIGHTS } from '../config.js';
+import { CELL_LIGHT_SCOPE, HEMI_INTENSITY, TOP_VIEW_AMBIENT_BOOST } from '../config.js';
 
-// Spots des tableaux : éteints par défaut, seuls ceux de la pièce (cellule) où se trouve
-// la caméra sont allumés. Idem pour la lampe de cellule si ROOM_ONLY_CELL_LIGHTS. Avantages : une ambiance plus sombre et dirigée, et surtout
-// moins de cartes d'ombre actives à la fois (au plus les spots d'une pièce + les lampes
-// de cellule), donc bien moins d'unités de texture consommées par les shaders.
+// Éclairage par pièce, pour tenir la limite de textures du shader (16) et la mémoire quelle
+// que soit la taille du bâtiment :
+//  - SPOTS des tableaux : éteints par défaut, seuls ceux de la pièce (cellule) où se trouve
+//    la caméra sont allumés ;
+//  - LAMPES de cellule : la pièce courante et les pièces directement connectées (voisines par
+//    un côté), ou toutes si CELL_LIGHT_SCOPE = 'all'.
+// Budget de textures : spots de la pièce + au plus 5 lampes (courante + 4 voisines) + 4
+// textures de matériau.
 //
-// Cartes d'ombre : `bake` les calcule une seule fois, pièce par pièce (les spots d'une
-// pièce allumés pendant son rendu), puis elles restent en mémoire : un spot rallumé
-// retrouve ses ombres sans calcul. Le nombre de spots allumés ne prend que quelques
-// valeurs (celles des pièces), donc les shaders correspondants sont tous compilés au
-// démarrage, sans à-coup ensuite.
+// Cartes d'ombre : `bake` les calcule une seule fois, cellule par cellule (les lumières de
+// chaque configuration allumées pendant son rendu), puis elles restent en mémoire : une
+// lumière rallumée retrouve ses ombres sans calcul. Chaque configuration (nombre de spots et
+// de lampes allumés) est rencontrée pendant ce parcours : tous les shaders correspondants
+// sont compilés au démarrage, sans à-coup ensuite.
 
-// Index de la cellule contenant le point (x, z), -1 si aucune (ex. creux de l'angle du L)
-function cellIndexAt(room, x, z) {
-  const half = CELL_SIZE / 2;
-  return room.cells.findIndex(
-    ({ center }) => Math.abs(x - center.x) <= half && Math.abs(z - center.z) <= half,
-  );
-}
-
-// Retourne { bake(renderer, scene, camera), update(camera) }
+// Retourne { setSpotsOff(off, nearPosition), bake(renderer, scene, camera), update(camera) }
 export function createRoomLights(room, paintings) {
   // Spots regroupés par pièce
   const spotsByCell = new Map();
@@ -32,37 +28,41 @@ export function createRoomLights(room, paintings) {
   let current = null;
   let spotsOff = false; // vue du dessus : tous les spots éteints
 
-  // Allume les spots (et la lampe de cellule) de la pièce `cellIndex`, éteint tous les autres
+  // Allume les spots de la pièce `cellIndex` et les lampes de la pièce et de ses voisines,
+  // éteint tout le reste
   function setRoom(cellIndex) {
     if (cellIndex === current) return;
     current = cellIndex;
     for (const [cell, spots] of spotsByCell) {
       for (const spot of spots) spot.visible = cell === cellIndex;
     }
-    if (ROOM_ONLY_CELL_LIGHTS) {
-      room.cellLights.forEach((light, cell) => (light.visible = cell === cellIndex));
+    if (CELL_LIGHT_SCOPE !== 'all') {
+      const lit = new Set([cellIndex, ...room.cells[cellIndex].neighbors]);
+      room.cellLights.forEach((light, cell) => (light.visible = lit.has(cell)));
     }
   }
 
-  // Vue du dessus : éteint tous les spots (les lampes de cellule ne sont pas touchées).
-  // En repassant à faux, rallume tout de suite les spots de la pièce contenant `nearPosition`
-  // (la destination du retour dans le bâtiment) ; sans position, `update` le fait à l'image suivante.
+  // Vue du dessus : éteint tous les spots (les lampes ne sont pas touchées) et renforce
+  // l'ambiance pour que tout le bâtiment reste lisible. En repassant à faux, rallume tout de
+  // suite la pièce contenant `nearPosition` (la destination du retour dans le bâtiment) ;
+  // sans position, `update` le fait à l'image suivante.
   function setSpotsOff(off, nearPosition) {
     spotsOff = off;
     current = null;
+    room.hemisphere.intensity = HEMI_INTENSITY * (off ? TOP_VIEW_AMBIENT_BOOST : 1);
     if (off) {
       for (const spots of spotsByCell.values()) for (const spot of spots) spot.visible = false;
     } else if (nearPosition) {
-      const cellIndex = cellIndexAt(room, nearPosition.x, nearPosition.z);
+      const cellIndex = room.cellIndexAt(nearPosition.x, nearPosition.z);
       if (cellIndex >= 0) setRoom(cellIndex);
     }
   }
 
   return {
     setSpotsOff,
-    // Calcule toutes les cartes d'ombre : un rendu par pièce, avec ses spots allumés
+    // Calcule toutes les cartes d'ombre : un rendu par cellule
     bake(renderer, scene, camera) {
-      for (const cellIndex of spotsByCell.keys()) {
+      for (let cellIndex = 0; cellIndex < room.cells.length; cellIndex++) {
         setRoom(cellIndex);
         renderer.shadowMap.needsUpdate = true;
         renderer.render(scene, camera);
@@ -72,10 +72,10 @@ export function createRoomLights(room, paintings) {
       renderer.render(scene, camera);
       setSpotsOff(false);
     },
-    // À appeler à chaque image : bascule les spots quand la caméra change de pièce
+    // À appeler à chaque image : bascule l'éclairage quand la caméra change de pièce
     update(camera) {
       if (spotsOff) return;
-      const cellIndex = cellIndexAt(room, camera.position.x, camera.position.z);
+      const cellIndex = room.cellIndexAt(camera.position.x, camera.position.z);
       if (cellIndex >= 0) setRoom(cellIndex);
     },
   };

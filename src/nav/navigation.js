@@ -114,6 +114,14 @@ export function createNavigation({
     showPanel();
   }
 
+  // Sur un très grand bâtiment, la caméra de la vue du dessus peut se trouver plus loin que le
+  // plan lointain : on le recule au besoin (jamais réduit)
+  function fitFarPlane(position) {
+    if (camera.far >= position.y * 2) return;
+    camera.far = position.y * 2;
+    camera.updateProjectionMatrix();
+  }
+
   // Vue du dessus : entrée (la caméra monte et regarde à la verticale)
   function enterTopView() {
     intro.cancel();
@@ -125,7 +133,9 @@ export function createNavigation({
     look.setEnabled(false);
     state = { name: 'moving', id: null };
     // yaw 0 : nord en haut de l'écran
-    travel.start({ position: computeTopPosition(bounds, camera), yaw: 0, pitch: -Math.PI / 2 }, () => {
+    const topPosition = computeTopPosition(bounds, camera);
+    fitFarPlane(topPosition);
+    travel.start({ position: topPosition, yaw: 0, pitch: -Math.PI / 2 }, () => {
       state = { name: 'top', id: null };
     });
   }
@@ -215,7 +225,10 @@ export function createNavigation({
     playIntro: intro.start,
     // À appeler au redimensionnement : recadre le bâtiment si on est en vue du dessus
     refitTopView() {
-      if (state.name === 'top') camera.position.copy(computeTopPosition(bounds, camera));
+      if (state.name !== 'top') return;
+      const topPosition = computeTopPosition(bounds, camera);
+      fitFarPlane(topPosition);
+      camera.position.copy(topPosition);
     },
     update(dt) {
       travel.update(dt);
