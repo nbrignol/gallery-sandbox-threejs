@@ -15,19 +15,27 @@ canvas#scene {
   height: 100vh;
   height: 100dvh;
   touch-action: none; /* le glisser tactile fait tourner la caméra, pas défiler la page */
+  cursor: grab; /* main ouverte : on peut glisser pour regarder autour de soi */
 }
 
-/* En-tête en overlay : dégradé vertical, sans bloquer les clics derrière */
+/* Pendant un glisser : main fermée (prioritaire sur le curseur du survol d'un tableau) */
+canvas#scene.is-dragging {
+  cursor: grabbing !important;
+}
+
+/* En-tête en overlay : pastille noire alignée à gauche, à 1rem des bords de l'écran,
+   sans bloquer les clics derrière (hauteur ≈ 3 rem : le panneau est placé en dessous) */
 header {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: calc(env(safe-area-inset-top) + 1rem);
+  left: 1rem;
   z-index: 10;
+  display: inline-block;
   box-sizing: border-box;
-  min-height: 100px;
-  padding: calc(env(safe-area-inset-top) + 20px) 24px 0;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0));
+  padding: 0.5rem 1rem;
+  background: #000;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
   color: #fff;
   font-family: system-ui, sans-serif;
   font-size: 1.25rem;

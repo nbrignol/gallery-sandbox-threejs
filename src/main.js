@@ -1,6 +1,17 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { CAMERA_FOV, ENV_INTENSITY, EYE_HEIGHT, FLOOR_ENV_INTENSITY, SITE_NAME, TONE_EXPOSURE } from './config.js';
+import {
+  CAMERA_FOV,
+  ENV_INTENSITY,
+  EYE_HEIGHT,
+  FLOOR_ENV_INTENSITY,
+  SITE_NAME,
+  START_CELL,
+  START_OFFSET_X,
+  START_OFFSET_Z,
+  START_YAW_DEG,
+  TONE_EXPOSURE,
+} from './config.js';
 import { cells } from './data/layout.js';
 import { paintings as paintingsByCell } from './data/paintings.js';
 import { createRoom } from './world/room.js';
@@ -103,7 +114,8 @@ async function init() {
   enableShadows(renderer, room.group, gallery.paintings, props);
 
   // Départ au centre de la cellule d'angle (première cellule)
-  const camera = createCamera(room.cells[0].center);
+  const startCenter = room.cells[START_CELL].center;
+  const camera = createCamera({ x: startCenter.x + START_OFFSET_X, z: startCenter.z + START_OFFSET_Z });
 
   // Spots allumés seulement dans la pièce courante ; ombres calculées une fois par pièce
   const roomLights = createRoomLights(room, gallery.paintings);
@@ -116,6 +128,10 @@ async function init() {
     paintings: gallery.paintings,
     occluders: room.occluders,
   });
+
+  // Départ orienté, puis micro-animation droite / gauche
+  navigation.look.setYaw(THREE.MathUtils.degToRad(START_YAW_DEG));
+  navigation.playIntro();
 
   setupResize(renderer, camera);
   startLoop(renderer, scene, camera, (dt) => {

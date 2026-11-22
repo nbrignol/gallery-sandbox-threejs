@@ -41,6 +41,7 @@ export function createRoom(cells) {
   const group = new THREE.Group();
   const roomCells = [];
   const occluders = [];
+  const cellLights = []; // lampe de chaque cellule (même ordre que `cells`)
 
   const ao = createBakedAO(cells);
   group.add(createGlobalLight(), createSeparators(cells, ao));
@@ -55,12 +56,14 @@ export function createRoom(cells) {
       ao,
     );
     cellGroup.position.set(origin.x, 0, origin.z);
-    group.add(cellGroup, createCellLight(cellGroup.position.x, cellGroup.position.z));
+    const cellLight = createCellLight(cellGroup.position.x, cellGroup.position.z);
+    cellLights.push(cellLight);
+    group.add(cellGroup, cellLight);
     occluders.push(...wallMeshes);
 
     const center = new THREE.Vector3(cellGroup.position.x, 0, cellGroup.position.z);
     roomCells.push({ center, walls: sides.map((s) => getWallData(s, center)) });
   }
 
-  return { group, cells: roomCells, occluders, ao };
+  return { group, cells: roomCells, occluders, ao, cellLights };
 }

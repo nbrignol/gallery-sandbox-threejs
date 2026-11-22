@@ -1,7 +1,7 @@
-import { CELL_SIZE } from '../config.js';
+import { CELL_SIZE, ROOM_ONLY_CELL_LIGHTS } from '../config.js';
 
 // Spots des tableaux : éteints par défaut, seuls ceux de la pièce (cellule) où se trouve
-// la caméra sont allumés. Avantages : une ambiance plus sombre et dirigée, et surtout
+// la caméra sont allumés. Idem pour la lampe de cellule si ROOM_ONLY_CELL_LIGHTS. Avantages : une ambiance plus sombre et dirigée, et surtout
 // moins de cartes d'ombre actives à la fois (au plus les spots d'une pièce + les lampes
 // de cellule), donc bien moins d'unités de texture consommées par les shaders.
 //
@@ -31,12 +31,15 @@ export function createRoomLights(room, paintings) {
 
   let current = null;
 
-  // Allume les spots de la pièce `cellIndex`, éteint tous les autres (null = tous éteints)
+  // Allume les spots (et la lampe de cellule) de la pièce `cellIndex`, éteint tous les autres
   function setRoom(cellIndex) {
     if (cellIndex === current) return;
     current = cellIndex;
     for (const [cell, spots] of spotsByCell) {
       for (const spot of spots) spot.visible = cell === cellIndex;
+    }
+    if (ROOM_ONLY_CELL_LIGHTS) {
+      room.cellLights.forEach((light, cell) => (light.visible = cell === cellIndex));
     }
   }
 

@@ -17,6 +17,7 @@ export function createLook(canvas, camera) {
   function onDown(event) {
     if (!enabled || event.button !== 0) return;
     dragging = true;
+    canvas.classList.add('is-dragging');
     lastX = event.clientX;
     canvas.setPointerCapture(event.pointerId);
   }
@@ -30,6 +31,7 @@ export function createLook(canvas, camera) {
 
   function onUp() {
     dragging = false;
+    canvas.classList.remove('is-dragging');
   }
 
   canvas.addEventListener('pointerdown', onDown);
@@ -42,7 +44,10 @@ export function createLook(canvas, camera) {
     setYaw,
     setEnabled(value) {
       enabled = value;
-      if (!value) dragging = false;
+      if (!value) {
+        dragging = false;
+        canvas.classList.remove('is-dragging');
+      }
     },
   };
 }

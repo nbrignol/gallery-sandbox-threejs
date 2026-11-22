@@ -3,6 +3,7 @@ import { CLOSE_BACKOFF_DISTANCE, PANEL_FADE_START, PANEL_HIDE_ANGLE, PANEL_SHOW_
 import { createPanel } from '../ui/panel.js';
 import { wrapAngle } from './angle.js';
 import { createHighlight } from './highlight.js';
+import { createIntro } from './intro.js';
 import { createLook } from './look.js';
 import { createPicking } from './picking.js';
 import { createTravel } from './travel.js';
@@ -22,6 +23,7 @@ export function createNavigation({ canvas, camera, paintings, occluders }) {
   const look = createLook(canvas, camera);
   const travel = createTravel(camera, look);
   const highlight = createHighlight(paintings);
+  const intro = createIntro({ look, canvas });
 
   let state = { name: 'idle', id: null };
   let panelOpen = false; // faux si l'utilisateur a fermé le panneau
@@ -92,6 +94,7 @@ export function createNavigation({ canvas, camera, paintings, occluders }) {
   // Sur le tableau courant, ramène simplement la caméra face à lui.
   function goTo(id) {
     if (state.name === 'moving') return;
+    intro.cancel();
     state = { name: 'moving', id };
     panelOpen = false;
     hidePanel();
@@ -120,8 +123,11 @@ export function createNavigation({ canvas, camera, paintings, occluders }) {
 
   return {
     goTo,
+    look, // orientation de départ : navigation.look.setYaw(...)
+    playIntro: intro.start,
     update(dt) {
       travel.update(dt);
+      intro.update(dt);
       // Pas de halo pendant un déplacement ; il revient à l'arrivée si le
       // pointeur est toujours sur le tableau
       highlight.setHovered(state.name === 'moving' ? null : hoveredGroup);

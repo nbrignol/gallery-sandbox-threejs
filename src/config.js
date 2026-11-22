@@ -23,6 +23,7 @@ export const FLOOR_SPECULAR = 0.3; // reflets du sol : 0 = parquet mat, sans auc
 export const HEMI_INTENSITY = 0.5; // lumière d'ambiance hémisphérique
 export const HEMI_SKY_COLOR = 0xffffff; // ambiance : faces tournées vers le haut
 export const HEMI_GROUND_COLOR = 0xd9d2c7; // ambiance : faces tournées vers le bas (plafond)
+export const ROOM_ONLY_CELL_LIGHTS = false; // true : seule la lampe de la pièce courante est allumée (comme les spots) ; false : toutes les lampes de cellule restent allumées
 export const CELL_LIGHT_INTENSITY = 5; // lampe douce de chaque cellule (cd)
 export const CELL_LIGHT_DROP = 1.2; // distance sous le plafond de la lampe (m) : plus bas = point chaud moins fort au plafond
 
@@ -85,8 +86,20 @@ export const PANEL_FADE_START = 10; // début du fondu
 export const PANEL_HIDE_ANGLE = 30; // disparition complète
 export const PANEL_SHOW_ANGLE = 15; // réapparition (hystérésis)
 
+// Départ de la visite : cellule, décalage (m) par rapport à son centre, et orientation
+// (degrés ; 0 = vers le nord (-Z), négatif = vers la droite : -90 = vers l'est (+X))
+export const START_CELL = 0; // cellule de la Joconde
+export const START_OFFSET_X = 0;
+export const START_OFFSET_Z = 0;
+export const START_YAW_DEG = -100; // vers l'est : La Jeune Fille à la perle, au fond de la pièce voisine
+// Micro-animation d'introduction (droite puis gauche), interrompue au premier contact
+export const INTRO_ENABLED = true;
+export const INTRO_DELAY = 0.8; // attente avant de commencer (s)
+export const INTRO_DURATION = 3.6; // durée de l'aller-retour (s)
+export const INTRO_SWEEP_DEG = 5; // amplitude de chaque côté (degrés)
+
 // Navigation
-export const LOOK_SENSITIVITY = 0.004; // rotation (rad) par pixel de glisser
+export const LOOK_SENSITIVITY = 0.0015; // rotation (rad) par pixel de glisser (0.004 = trop sensible ; plus bas = plus lent)
 export const CLICK_MAX_MOVE = 5; // en deçà (px), un appui-relâchement est un clic
 export const TRAVEL_SECONDS_PER_METER = 0.3; // durée du déplacement par mètre
 export const TRAVEL_MIN_DURATION = 0.4; // durée minimale (s)
