@@ -19,27 +19,38 @@ export function findBench(object) {
   return null;
 }
 
+// Idem pour une plante (objet marqué userData.plant). Retourne null si aucune.
+export function findPlant(object) {
+  for (let o = object; o; o = o.parent) {
+    if (o.userData?.plant) return o;
+  }
+  return null;
+}
+
 // Picking par raycast depuis le pointeur. Les murs (`occluders`) sont dans le
 // raycast : un tableau ou un banc caché derrière un mur n'est pas cliquable.
 // `onPick(group)` est appelé au clic sur un tableau (hors glisser), `onPickBench(bench)`
-// au clic sur un banc ; `onHover(group|null)` quand le tableau survolé change (le banc
-// n'a pas de halo) ; le curseur devient un doigt au survol des deux. Retourne { dispose }.
+// au clic sur un banc, `onPickPlant(plant)` au clic sur une plante ; `onHover(group|null)`
+// quand le tableau survolé change (banc et plante n'ont pas de halo) ; le curseur devient
+// un doigt au survol des trois. Retourne { dispose }.
 export function createPicking({
   canvas,
   camera,
   paintings,
   benches = [],
+  plants = [],
   occluders,
   onPick,
   onPickBench,
+  onPickPlant,
   onHover,
 }) {
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
-  const targets = [...paintings, ...benches, ...occluders];
+  const targets = [...paintings, ...benches, ...plants, ...occluders];
 
   // Objet cliquable sous le pointeur (le plus proche, murs compris) :
-  // { painting, bench }, tous deux null si rien (ou un mur)
+  // { painting, bench, plant }, tous null si rien (ou un mur)
   function pick(event) {
     const rect = canvas.getBoundingClientRect();
     pointer.set(
@@ -51,14 +62,15 @@ export function createPicking({
     return {
       painting: hit ? findPaintingGroup(hit.object) : null,
       bench: hit ? findBench(hit.object) : null,
+      plant: hit ? findPlant(hit.object) : null,
     };
   }
 
   // Survol (souris uniquement)
   let hovered = null;
 
-  function setHovered({ painting, bench }) {
-    canvas.style.cursor = painting || bench ? 'pointer' : '';
+  function setHovered({ painting, bench, plant }) {
+    canvas.style.cursor = painting || bench || plant ? 'pointer' : '';
     if (painting === hovered) return;
     hovered = painting;
     onHover?.(painting);
@@ -69,7 +81,7 @@ export function createPicking({
   }
 
   function onLeave() {
-    setHovered({ painting: null, bench: null });
+    setHovered({ painting: null, bench: null, plant: null });
   }
 
   // Clic = appui puis relâchement à moins de CLICK_MAX_MOVE px (sinon : glisser)
@@ -84,9 +96,10 @@ export function createPicking({
     const moved = Math.hypot(event.clientX - downAt.x, event.clientY - downAt.y);
     downAt = null;
     if (moved >= CLICK_MAX_MOVE) return;
-    const { painting, bench } = pick(event);
+    const { painting, bench, plant } = pick(event);
     if (painting) onPick(painting);
     else if (bench) onPickBench?.(bench);
+    else if (plant) onPickPlant?.(plant);
   }
 
   canvas.addEventListener('pointermove', onMove);

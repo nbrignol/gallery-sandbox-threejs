@@ -73,6 +73,7 @@ function createCeiling(size, origin, ao) {
   const ceiling = new THREE.Mesh(geometry, ceilingMaterial);
   ceiling.rotation.x = Math.PI / 2;
   ceiling.position.y = CEILING_HEIGHT;
+  ceiling.name = 'ceiling';
   return ceiling;
 }
 

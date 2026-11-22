@@ -5,6 +5,7 @@ import {
   BENCH_MODEL,
   BENCH_SCALE,
   PLANT_CONTACT_RADIUS,
+  PLANT_HITBOX_PADDING,
   PLANT_CORNER_INSET,
   PLANT_MODEL,
   PLANT_SCALE,
@@ -85,6 +86,24 @@ async function loadModel(loader, url, scale) {
   return holder;
 }
 
+// Boîte de clic invisible autour d'un modèle (dimensions du modèle + marge) : elle reçoit
+// le raycast mais n'est jamais dessinée ni ne projette d'ombre. Un maillage dont le matériau
+// est `visible: false` est ignoré par le rendu mais pas par le Raycaster.
+function createHitBoxFactory(model, padding) {
+  const box = new THREE.Box3().setFromObject(model);
+  const size = box.getSize(new THREE.Vector3()).addScalar(padding);
+  const center = box.getCenter(new THREE.Vector3());
+  const geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
+  const material = new THREE.MeshBasicMaterial({ visible: false });
+  return () => {
+    const hitBox = new THREE.Mesh(geometry, material);
+    hitBox.position.copy(center);
+    hitBox.name = 'hit-box';
+    hitBox.userData.hitBox = true; // ignoré par les ombres (shadows.js)
+    return hitBox;
+  };
+}
+
 // Crée les objets aux emplacements donnés. Retourne le groupe à ajouter à la scène.
 export async function createProps(placements) {
   const group = new THREE.Group();
@@ -97,12 +116,17 @@ export async function createProps(placements) {
     needed.has('plant') ? loadModel(loader, PLANT_MODEL, PLANT_SCALE) : null,
   ]);
   const models = { bench, plant };
+  const plantHitBox = plant ? createHitBoxFactory(plant, PLANT_HITBOX_PADDING) : null;
 
   for (const { type, x, z, yaw } of placements) {
     const object = models[type].clone(true); // géométries et matériaux partagés
     object.position.set(x, 0, z);
     object.rotation.y = yaw;
     if (type === 'bench') object.userData.bench = true; // cliquable : déplace la caméra (nav/picking.js)
+    if (type === 'plant') {
+      object.userData.plant = true; // cliquable : bascule en vue du dessus
+      object.add(plantHitBox()); // boîte invisible : zone de clic élargie
+    }
     group.add(object);
   }
   group.name = 'props';

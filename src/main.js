@@ -5,12 +5,14 @@ import {
   ENV_INTENSITY,
   EYE_HEIGHT,
   FLOOR_ENV_INTENSITY,
+  SCENE_BACKGROUND,
   SITE_NAME,
   START_CELL,
   START_OFFSET_X,
   START_OFFSET_Z,
   START_YAW_DEG,
   TONE_EXPOSURE,
+  TOP_VIEW_BACKGROUND,
 } from './config.js';
 import { cells } from './data/layout.js';
 import { paintings as paintingsByCell } from './data/paintings.js';
@@ -43,7 +45,7 @@ function createRenderer() {
 // pour les matériaux PBR ; aucune image à charger)
 function createScene(renderer) {
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x222222);
+  scene.background = new THREE.Color(SCENE_BACKGROUND);
 
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
@@ -71,13 +73,14 @@ function createCamera(start) {
 }
 
 // Redimensionnement : renderer et caméra suivent la fenêtre
-function setupResize(renderer, camera) {
+function setupResize(renderer, camera, afterResize) {
   function onResize() {
     const w = window.innerWidth;
     const h = window.innerHeight;
     renderer.setSize(w, h, false); // la taille CSS est gérée par header.css
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
+    afterResize?.();
   }
   window.addEventListener('resize', onResize);
   onResize();
@@ -117,6 +120,15 @@ async function init() {
   const startCenter = room.cells[START_CELL].center;
   const camera = createCamera({ x: startCenter.x + START_OFFSET_X, z: startCenter.z + START_OFFSET_Z });
 
+  // Vue du dessus : spots éteints (rallumés dans la pièce de destination au retour), fond noir
+  // hors du bâtiment. Les plafonds ne sont pas touchés.
+  // Appelé par la navigation à l'entrée et à la sortie (`target` : position d'arrivée au retour).
+  function setTopView(on, target) {
+    roomLights.setSpotsOff(on, target);
+    scene.background.set(on ? TOP_VIEW_BACKGROUND : SCENE_BACKGROUND);
+    renderer.domElement.classList.toggle('is-top-view', on);
+  }
+
   // Spots allumés seulement dans la pièce courante ; ombres calculées une fois par pièce
   const roomLights = createRoomLights(room, gallery.paintings);
   roomLights.bake(renderer, scene, camera);
@@ -127,14 +139,17 @@ async function init() {
     camera,
     paintings: gallery.paintings,
     benches: props.children.filter((object) => object.userData.bench),
+    plants: props.children.filter((object) => object.userData.plant),
     occluders: room.occluders,
+    roomCells: room.cells,
+    onTopViewChange: setTopView,
   });
 
   // Départ orienté, puis micro-animation droite / gauche
   navigation.look.setYaw(THREE.MathUtils.degToRad(START_YAW_DEG));
   navigation.playIntro();
 
-  setupResize(renderer, camera);
+  setupResize(renderer, camera, navigation.refitTopView);
   startLoop(renderer, scene, camera, (dt) => {
     navigation.update(dt);
     roomLights.update(camera);

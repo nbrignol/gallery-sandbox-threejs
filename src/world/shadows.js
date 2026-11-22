@@ -47,7 +47,7 @@ export function enableShadows(renderer, roomGroup, paintings, propsGroup) {
   paintings.forEach(setupPainting);
   // Objets déco : projettent et reçoivent
   propsGroup.traverse((object) => {
-    if (object.isMesh) {
+    if (object.isMesh && !object.userData.hitBox) {
       object.castShadow = true;
       object.receiveShadow = true;
     }

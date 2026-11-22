@@ -30,6 +30,7 @@ export function createRoomLights(room, paintings) {
   }
 
   let current = null;
+  let spotsOff = false; // vue du dessus : tous les spots éteints
 
   // Allume les spots (et la lampe de cellule) de la pièce `cellIndex`, éteint tous les autres
   function setRoom(cellIndex) {
@@ -43,7 +44,22 @@ export function createRoomLights(room, paintings) {
     }
   }
 
+  // Vue du dessus : éteint tous les spots (les lampes de cellule ne sont pas touchées).
+  // En repassant à faux, rallume tout de suite les spots de la pièce contenant `nearPosition`
+  // (la destination du retour dans le bâtiment) ; sans position, `update` le fait à l'image suivante.
+  function setSpotsOff(off, nearPosition) {
+    spotsOff = off;
+    current = null;
+    if (off) {
+      for (const spots of spotsByCell.values()) for (const spot of spots) spot.visible = false;
+    } else if (nearPosition) {
+      const cellIndex = cellIndexAt(room, nearPosition.x, nearPosition.z);
+      if (cellIndex >= 0) setRoom(cellIndex);
+    }
+  }
+
   return {
+    setSpotsOff,
     // Calcule toutes les cartes d'ombre : un rendu par pièce, avec ses spots allumés
     bake(renderer, scene, camera) {
       for (const cellIndex of spotsByCell.keys()) {
@@ -51,9 +67,14 @@ export function createRoomLights(room, paintings) {
         renderer.shadowMap.needsUpdate = true;
         renderer.render(scene, camera);
       }
+      // Variante « spots éteints » (vue du dessus) : compilée ici, pas d'à-coup à l'ouverture
+      setSpotsOff(true);
+      renderer.render(scene, camera);
+      setSpotsOff(false);
     },
     // À appeler à chaque image : bascule les spots quand la caméra change de pièce
     update(camera) {
+      if (spotsOff) return;
       const cellIndex = cellIndexAt(room, camera.position.x, camera.position.z);
       if (cellIndex >= 0) setRoom(cellIndex);
     },

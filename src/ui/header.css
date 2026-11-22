@@ -23,6 +23,11 @@ canvas#scene.is-dragging {
   cursor: grabbing !important;
 }
 
+/* Vue du dessus : plus de glisser, donc plus de main ouverte */
+canvas#scene.is-top-view {
+  cursor: default;
+}
+
 /* En-tête en overlay : pastille noire alignée à gauche, à 1rem des bords de l'écran,
    sans bloquer les clics derrière (hauteur ≈ 3 rem : le panneau est placé en dessous) */
 header {

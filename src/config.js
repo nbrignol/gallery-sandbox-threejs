@@ -51,6 +51,7 @@ export const BENCH_SCALE = 1; // échelle du banc (1 = taille d'origine du modè
 export const PLANT_SCALE = 1; // échelle des plantes
 export const PLANT_CORNER_INSET = 0.5; // distance de la plante aux deux murs du coin (m)
 export const BENCH_CONTACT_RADIUS = 0.6; // rayon de l'ombre de contact du banc (m)
+export const PLANT_HITBOX_PADDING = 0.1; // marge de la boîte de clic invisible autour d'une plante (m, au total)
 export const PLANT_CONTACT_RADIUS = 0.5; // rayon de l'ombre de contact des plantes (m)
 
 // Caméra
@@ -85,6 +86,11 @@ export const LAMP_GAP = 0.25; // espace entre le haut du cadre et la lampe (m) :
 export const PANEL_FADE_START = 10; // début du fondu
 export const PANEL_HIDE_ANGLE = 30; // disparition complète
 export const PANEL_SHOW_ANGLE = 15; // réapparition (hystérésis)
+
+// Vue du dessus (bouton en haut à droite)
+export const SCENE_BACKGROUND = 0x222222; // fond de la scène en visite normale
+export const TOP_VIEW_BACKGROUND = 0x000000; // fond hors du bâtiment en vue du dessus
+export const TOP_VIEW_MARGIN = 1.15; // marge autour du bâtiment (1 = bord à bord)
 
 // Départ de la visite : cellule, décalage (m) par rapport à son centre, et orientation
 // (degrés ; 0 = vers le nord (-Z), négatif = vers la droite : -90 = vers l'est (+X))
