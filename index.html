@@ -7,8 +7,46 @@
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
     <title>Galerie</title>
+    <style>
+      /* Preloader : en ligne pour s'afficher avant le chargement du JS */
+      #preloader {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #111;
+        color: #fff;
+        font-family: system-ui, sans-serif;
+        font-size: 1.25rem;
+        letter-spacing: 0.08em;
+        transition: opacity 0.4s ease;
+      }
+      #preloader.is-done {
+        opacity: 0;
+        pointer-events: none;
+      }
+      /* Les points ont une largeur fixe : le texte ne bouge pas pendant l'animation */
+      #preloader .dots {
+        display: inline-block;
+        width: 1.5em;
+        text-align: left;
+      }
+      #preloader .dots::after {
+        content: '';
+        animation: preloader-dots 1.2s steps(1, end) infinite;
+      }
+      @keyframes preloader-dots {
+        0% { content: ''; }
+        25% { content: '.'; }
+        50% { content: '..'; }
+        75% { content: '...'; }
+      }
+    </style>
   </head>
   <body>
+    <div id="preloader">Chargement en cours<span class="dots"></span></div>
     <canvas id="scene"></canvas>
     <header>
       <span id="site-name"></span>

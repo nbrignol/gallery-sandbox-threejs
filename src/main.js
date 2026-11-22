@@ -170,4 +170,11 @@ async function init() {
   });
 }
 
-init();
+// Retire le preloader (fondu, puis suppression du DOM)
+function hidePreloader() {
+  const preloader = document.getElementById('preloader');
+  preloader.classList.add('is-done');
+  setTimeout(() => preloader.remove(), 500);
+}
+
+init().then(hidePreloader);
