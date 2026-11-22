@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { CEILING_GLOW, FRAME_COLOR } from '../config.js';
+import { CEILING_GLOW, FLOOR_SPECULAR, FRAME_COLOR } from '../config.js';
 
 // Textures PBR (CC0 : Poly Haven, ambientCG) rangées dans public/textures/<dossier>/
 // color.jpg, normal.jpg (version GL), roughness.jpg.
@@ -46,18 +46,24 @@ function loadMap(folder, file, isColor = false) {
   return texture;
 }
 
-// Matériau PBR complet (couleur, normal map, rugosité) depuis un dossier
-function createPbrMaterial({ folder }) {
-  return new THREE.MeshStandardMaterial({
+// Matériau PBR complet (couleur, normal map, rugosité) depuis un dossier.
+// `MaterialClass` / `extra` : pour un matériau particulier (ex. sol mat, voir plus bas).
+function createPbrMaterial({ folder }, MaterialClass = THREE.MeshStandardMaterial, extra = {}) {
+  return new MaterialClass({
     map: loadMap(folder, 'color.jpg', true),
     normalMap: loadMap(folder, 'normal.jpg'),
     roughnessMap: loadMap(folder, 'roughness.jpg'),
     roughness: 1, // multiplie la carte de rugosité
+    ...extra,
   });
 }
 
 // Matériaux partagés entre les cellules
-export const floorMaterial = createPbrMaterial(FLOOR);
+// Sol : MeshPhysicalMaterial pour pouvoir régler `specularIntensity`. À 0 (FLOOR_SPECULAR),
+// plus aucun reflet (lampes, environnement) : le parquet est mat.
+export const floorMaterial = createPbrMaterial(FLOOR, THREE.MeshPhysicalMaterial, {
+  specularIntensity: FLOOR_SPECULAR,
+});
 export const wallMaterial = createPbrMaterial(WALL);
 export const plinthBottomMaterial = createPbrMaterial(PLINTH_BOTTOM);
 export const plinthTopMaterial = createPbrMaterial(PLINTH_TOP);

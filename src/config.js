@@ -7,8 +7,8 @@ export const SITE_NAME = 'Galerie';
 export const CELL_SIZE = 6; // côté d'une cellule carrée (m)
 export const CEILING_HEIGHT = 3.5; // hauteur sous plafond (m)
 export const PLINTH_BOTTOM_HEIGHT = 0.12; // plinthe entre le sol et le mur (m) ; 0 = aucune
-export const PLINTH_TOP_HEIGHT = 0.08; // plinthe entre le mur et le plafond (m) ; 0 = aucune
-export const SEPARATOR_WIDTH = 0.1; // côté des séparateurs verticaux aux coins (m) ; 0 = aucun. Dépasse de la moitié dans la salle : garder > 2 × PLINTH_DEPTH
+export const PLINTH_TOP_HEIGHT = 0.02; // plinthe entre le mur et le plafond (m) ; 0 = aucune
+export const SEPARATOR_WIDTH = 0.02; // côté des séparateurs verticaux aux coins (m) ; 0 = aucun. Dépasse de la moitié dans la salle : garder > 2 × PLINTH_DEPTH
 export const PLINTH_DEPTH = 0.03; // relief : épaisseur des plinthes devant le mur (m)
 
 // Éclairage
@@ -16,6 +16,7 @@ export const CEILING_GLOW = 0.35; // le plafond émet un peu de lumière (plafon
 export const TONE_EXPOSURE = 1; // exposition globale (tone mapping)
 export const ENV_INTENSITY = 0.4; // intensité de l'environnement (reflets et ambiance douce)
 export const FLOOR_ENV_INTENSITY = 0.12; // environnement sur le sol seulement : bas = pas de grand reflet brillant à angle rasant
+export const FLOOR_SPECULAR = 0.3; // reflets du sol : 0 = parquet mat, sans aucun reflet ; 1 = brillance normale du matériau
 export const HEMI_INTENSITY = 0.5; // lumière d'ambiance hémisphérique
 export const HEMI_SKY_COLOR = 0xffffff; // ambiance : faces tournées vers le haut
 export const HEMI_GROUND_COLOR = 0xd9d2c7; // ambiance : faces tournées vers le bas (plafond)
@@ -27,6 +28,10 @@ export const SHADOW_MAP_SIZE = 1024; // résolution de la carte d'ombre de chaqu
 export const SHADOW_BIAS = -0.0003; // décalage de profondeur (anti-acné) ; plus négatif = moins d'acné mais ombres décollées
 export const SHADOW_NORMAL_BIAS = 0.004; // décalage le long de la normale (m)
 export const SHADOW_RADIUS = 3; // douceur du bord des ombres
+// Lampes de cellule : ombres des objets (banc, plantes) et des cadres, aussi calculées une seule fois
+export const CELL_SHADOW_MAP_SIZE = 512; // résolution par face (6 faces par lampe)
+export const CELL_SHADOW_BIAS = -0.002; // anti-acné ; plus négatif = moins d'acné mais ombres décollées
+export const CELL_SHADOW_NORMAL_BIAS = 0.02; // décalage le long de la normale (m)
 
 // Occlusion ambiante « cuite » (dégradés sombres dans les coins, calculés au chargement)
 export const AO_STRENGTH = 0.6; // 0 = désactivée ; 1 = occlusion maximale au contact

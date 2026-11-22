@@ -10,7 +10,8 @@ import {
 // - Projettent : le cadre de chaque tableau (pas l'applique : c'est la source).
 // - Reçoivent : la salle (sol, murs, plafond, plinthes, séparateurs) et les toiles.
 // - Les objets déco (banc, plantes) projettent et reçoivent.
-// Les lampes de cellule n'ont pas d'ombres (lumière d'appoint douce).
+// Les lampes de cellule projettent aussi des ombres (objets, cadres), calculées dans
+// la même passe unique (voir lights.js).
 // La scène étant statique, la carte d'ombre n'est pas recalculée à chaque image :
 // à relancer (`renderer.shadowMap.needsUpdate = true`) si quelque chose change
 // de place ou de forme.
