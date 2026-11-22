@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { FRAME_COLOR } from '../config.js';
+import { CEILING_GLOW, FRAME_COLOR } from '../config.js';
 
 // Textures PBR (CC0 : Poly Haven, ambientCG) rangées dans public/textures/<dossier>/
 // color.jpg, normal.jpg (version GL), roughness.jpg.
@@ -20,6 +20,18 @@ export const WALL = { folder: 'plaster001', size: 2 };
 // export const WALL = { folder: 'plaster003', size: 2 };
 // export const WALL = { folder: 'plaster004', size: 2 };
 // export const WALL = { folder: 'plaster005', size: 2 };
+
+// Plinthes (relief en boîte) : une texture pour la basse, une pour la haute.
+// Mêmes dossiers disponibles que ci-dessus ; tailles réelles inconnues = 2 m estimés.
+export const PLINTH_BOTTOM = { folder: 'woodfloor051', size: 1.8 };
+// export const PLINTH_BOTTOM = { folder: 'herringbone_parquet', size: 3.4 };
+// export const PLINTH_BOTTOM = { folder: 'concrete048', size: 2 };
+// export const PLINTH_BOTTOM = { folder: 'plaster003', size: 2 };
+
+export const PLINTH_TOP = { folder: 'plaster002', size: 2 };
+// export const PLINTH_TOP = { folder: 'plaster003', size: 2 };
+// export const PLINTH_TOP = { folder: 'concrete048', size: 2 };
+// export const PLINTH_TOP = { folder: 'woodfloor051', size: 1.8 };
 
 const loader = new THREE.TextureLoader();
 
@@ -47,7 +59,14 @@ function createPbrMaterial({ folder }) {
 // Matériaux partagés entre les cellules
 export const floorMaterial = createPbrMaterial(FLOOR);
 export const wallMaterial = createPbrMaterial(WALL);
-export const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 });
+export const plinthBottomMaterial = createPbrMaterial(PLINTH_BOTTOM);
+export const plinthTopMaterial = createPbrMaterial(PLINTH_TOP);
+export const ceilingMaterial = new THREE.MeshStandardMaterial({
+  color: 0xffffff,
+  roughness: 1,
+  emissive: 0xfff6ea,
+  emissiveIntensity: CEILING_GLOW,
+});
 
 // Cadre : bois sombre mat (couleur unie : le grain serait mal orienté par
 // ExtrudeGeometry). Surchargeable par tableau (voir frame.js).

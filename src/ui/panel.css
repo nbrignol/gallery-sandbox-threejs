@@ -30,6 +30,14 @@
   visibility: visible;
 }
 
+.panel-meta {
+  margin: 0 28px 6px 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9a9a9a;
+}
+
 .panel-title {
   margin: 0 28px 10px 0;
   font-size: 1.2rem;

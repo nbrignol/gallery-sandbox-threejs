@@ -6,6 +6,20 @@ export const SITE_NAME = 'Galerie';
 // Salle
 export const CELL_SIZE = 8; // côté d'une cellule carrée (m)
 export const CEILING_HEIGHT = 3.5; // hauteur sous plafond (m)
+export const PLINTH_BOTTOM_HEIGHT = 0.12; // plinthe entre le sol et le mur (m) ; 0 = aucune
+export const PLINTH_TOP_HEIGHT = 0.08; // plinthe entre le mur et le plafond (m) ; 0 = aucune
+export const SEPARATOR_WIDTH = 0.1; // côté des séparateurs verticaux aux coins (m) ; 0 = aucun. Dépasse de la moitié dans la salle : garder > 2 × PLINTH_DEPTH
+export const PLINTH_DEPTH = 0.03; // relief : épaisseur des plinthes devant le mur (m)
+
+// Éclairage
+export const CEILING_GLOW = 0.35; // le plafond émet un peu de lumière (plafond lumineux, évite le gris terne)
+export const TONE_EXPOSURE = 1; // exposition globale (tone mapping)
+export const ENV_INTENSITY = 0.4; // intensité de l'environnement (reflets et ambiance douce)
+export const HEMI_INTENSITY = 0.5; // lumière d'ambiance hémisphérique
+export const HEMI_SKY_COLOR = 0xffffff; // ambiance : faces tournées vers le haut
+export const HEMI_GROUND_COLOR = 0xd9d2c7; // ambiance : faces tournées vers le bas (plafond)
+export const CELL_LIGHT_INTENSITY = 5; // lampe douce de chaque cellule (cd)
+export const CELL_LIGHT_DROP = 1.2; // distance sous le plafond de la lampe (m) : plus bas = point chaud moins fort au plafond
 
 // Caméra
 export const EYE_HEIGHT = 1.6; // hauteur des yeux (m)
@@ -19,7 +33,7 @@ export const PAINTING_MAX_WALL_RATIO = 0.7; // largeur max en part de la largeur
 export const PAINTING_WALL_OFFSET = 0.02; // décalage devant le mur (m)
 export const PAINTING_SCREEN_FILL = 0.65; // part de l'écran occupée par le tableau au point de vue
 export const PANEL_VIEW_SHIFT = 0.2; // décalage latéral du point de vue (part de la demi-largeur visible), pour laisser la place au panneau à droite
-export const PAINTING_SPOT_INTENSITY = 20; // intensité du spot (cd)
+export const PAINTING_SPOT_INTENSITY = 30; // intensité du spot (cd)
 export const PAINTING_SPOT_DISTANCE = 1.5; // distance du spot devant le mur (m)
 
 // Cadres (valeurs par défaut)
@@ -28,6 +42,12 @@ export const FRAME_DEPTH = 0.03; // profondeur (m)
 export const FRAME_COLOR = 0x2b1d14; // bois sombre
 export const FRAME_BEVEL = 0.008; // taille et épaisseur du biseau (m)
 export const FRAME_CANVAS_RECESS = 0.002; // retrait de la toile derrière la face avant du cadre (m)
+
+// Lampe de tableau (petite boîte au-dessus du cadre, matériau du cadre)
+export const LAMP_WIDTH = 0.3; // largeur max (m) ; limitée à 60 % de la largeur du tableau
+export const LAMP_HEIGHT = 0.04; // hauteur (m)
+export const LAMP_DEPTH = 0.08; // avancée devant le mur (m)
+export const LAMP_GAP = 0.25; // espace entre le haut du cadre et la lampe (m) : au-dessus du halo du spot
 
 // Panneau d'information : angles en degrés d'écart avec la vue face au tableau
 export const PANEL_FADE_START = 10; // début du fondu

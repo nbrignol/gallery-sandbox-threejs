@@ -8,6 +8,10 @@ import {
   PAINTING_SPOT_INTENSITY,
   PAINTING_WALL_OFFSET,
   FRAME_CANVAS_RECESS,
+  LAMP_DEPTH,
+  LAMP_GAP,
+  LAMP_HEIGHT,
+  LAMP_WIDTH,
 } from '../config.js';
 import { createFrame, resolveFrameStyle } from './frame.js';
 import { computeViewpoint } from './viewpoint.js';
@@ -52,20 +56,35 @@ function createCanvas(texture, width, height, frameDepth) {
   return canvas;
 }
 
+// Petite boîte au-dessus du cadre qui figure la lampe du tableau (décor : la
+// lumière vient du spot). Matériau du cadre, dos contre le mur.
+// `height` : hauteur du tableau cadre compris.
+function createLamp(width, height, material) {
+  const lampWidth = Math.min(LAMP_WIDTH, width * 0.6);
+  const lamp = new THREE.Mesh(new THREE.BoxGeometry(lampWidth, LAMP_HEIGHT, LAMP_DEPTH), material);
+  lamp.name = 'lamp';
+  lamp.position.set(
+    0,
+    height / 2 + LAMP_GAP + LAMP_HEIGHT / 2,
+    LAMP_DEPTH / 2 - PAINTING_WALL_OFFSET,
+  );
+  return lamp;
+}
+
 // Spot dirigé vers le centre de la toile (repère local du groupe :
 // +Z = devant le tableau, origine = centre du tableau)
 function createSpot(width, height, centerY) {
-  const spot = new THREE.SpotLight(0xfff2e0, PAINTING_SPOT_INTENSITY, 0, 1, 0.6, 2);
+  const spot = new THREE.SpotLight(0xfff2e0, PAINTING_SPOT_INTENSITY, 0, 1, 1, 2);
   spot.name = 'spot';
   spot.position.set(0, CEILING_HEIGHT - 0.3 - centerY, PAINTING_SPOT_DISTANCE);
   const reach = Math.hypot(spot.position.y, spot.position.z);
-  spot.angle = Math.min(Math.atan((Math.max(width, height) * 0.75) / reach), Math.PI / 3);
+  spot.angle = Math.min(Math.atan((Math.max(width, height) * 0.6) / reach), Math.PI / 3);
   return spot;
 }
 
 // Crée le groupe d'un tableau posé sur un mur (centré, t = 0.5).
 // Les métadonnées sont uniquement sur le groupe (userData).
-export async function createPainting(data, wall, id) {
+export async function createPainting(data, wall, id, cellIndex) {
   const texture = await loadTexture(data.src);
   const aspect = texture.image.width / texture.image.height;
   const style = resolveFrameStyle(data.frame);
@@ -79,6 +98,7 @@ export async function createPainting(data, wall, id) {
   group.add(
     createCanvas(texture, canvasWidth, canvasHeight, style.depth),
     createFrame(canvasWidth, canvasHeight, style),
+    createLamp(width, height, style.material),
   );
 
   const spot = createSpot(width, height, PAINTING_CENTER_HEIGHT);
@@ -93,6 +113,7 @@ export async function createPainting(data, wall, id) {
 
   group.userData = {
     paintingId: id,
+    cellIndex, // cellule (pièce) du tableau : limite la navigation précédent / suivant
     src: data.src,
     title: data.title,
     desc: data.desc,

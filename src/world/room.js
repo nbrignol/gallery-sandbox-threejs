@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { CELL_SIZE, CEILING_HEIGHT } from '../config.js';
 import { SIDES, createCell } from './cell.js';
 import { createGlobalLight, createCellLight } from './lights.js';
+import { createSeparators } from './separators.js';
 
 // Une cellule existe-t-elle aux coordonnées de grille (i, j) ?
 function hasCell(cells, i, j) {
@@ -40,7 +41,7 @@ export function createRoom(cells) {
   const roomCells = [];
   const occluders = [];
 
-  group.add(createGlobalLight());
+  group.add(createGlobalLight(), createSeparators(cells));
 
   for (const [i, j] of cells) {
     const sides = getWallSides(cells, i, j);

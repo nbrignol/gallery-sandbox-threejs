@@ -19,10 +19,11 @@ function createButton(className, label, text, onClick) {
 
 // Panneau d'information d'un tableau, à droite, sous l'en-tête.
 // API : show(data), hide(), setOpacity(0–1).
-// `data` = userData d'un tableau (title, desc). Les boutons appellent
+// `data` = userData d'un tableau (title, desc, cellIndex, indexInRoom). Les boutons appellent
 // onPrev / onNext / onClose ; le panneau ne connaît pas la liste des tableaux.
 export function createPanel({ onPrev, onNext, onClose }) {
   const root = el('aside', 'panel');
+  const meta = el('p', 'panel-meta');
   const title = el('h2', 'panel-title');
   const desc = el('p', 'panel-desc');
   const nav = el('div', 'panel-nav');
@@ -32,6 +33,7 @@ export function createPanel({ onPrev, onNext, onClose }) {
   );
   root.append(
     createButton('panel-close', 'Fermer', '×', onClose),
+    meta,
     title,
     desc,
     nav,
@@ -40,6 +42,7 @@ export function createPanel({ onPrev, onNext, onClose }) {
 
   return {
     show(data) {
+      meta.textContent = `Pièce ${data.cellIndex + 1} / Tableau ${data.indexInRoom + 1}`;
       title.textContent = data.title;
       desc.textContent = data.desc;
       root.classList.add('is-open');

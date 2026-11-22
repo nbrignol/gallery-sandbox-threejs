@@ -67,10 +67,17 @@ export function createNavigation({ canvas, camera, paintings, occluders }) {
     });
   }
 
-  // Précédent / suivant : ordre de paintings.flat(), en boucle
+  // Précédent / suivant : limités aux tableaux de la pièce (cellule) en cours,
+  // dans l'ordre de paintings.flat(), en boucle. Ne change jamais de pièce.
   function step(delta) {
     if (state.name !== 'atPainting') return;
-    goTo((state.id + delta + paintings.length) % paintings.length);
+    const current = paintings[state.id];
+    const inRoom = paintings.filter(
+      (p) => p.userData.cellIndex === current.userData.cellIndex,
+    );
+    const index = inRoom.indexOf(current);
+    const next = inRoom[(index + delta + inRoom.length) % inRoom.length];
+    goTo(next.userData.paintingId);
   }
 
   function arrive(id) {
