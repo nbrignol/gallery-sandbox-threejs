@@ -13,6 +13,8 @@
 //
 // TABLEAUX (paintings) : une liste par cellule. Le k-ième tableau d'une cellule est posé sur le
 // k-ième mur de sa liste (ordre N, E, S, O parmi les murs existants), au centre.
+//   - `null` = un mur sans rien (pour sauter un mur) ; `art(null, { bench, … })` = un mur sans
+//     tableau mais avec de la déco ;
 //   - `[]` = une pièce sans tableau : elle reste visitable, on la traverse (utile pour garder
 //     l'alignement des index, ou pour un carrefour sans mur) ;
 //   - les cellules au-delà de la dernière liste n'ont pas de tableau non plus.
@@ -24,7 +26,7 @@ import { art } from './artworks.js';
 
 export const galleries = [
   {
-    name: 'Classique',
+    name: '1',
     // Un L de 3 salles
     grid: [
       [1, 1],
@@ -37,58 +39,45 @@ export const galleries = [
     ],
   },
   {
-    name: 'Croix',
+    name: '2',
     // Un couloir nord-sud qui croise une travée est-ouest (7 salles). La salle centrale n'a aucun
     // mur : elle est vide (`[]`), tout comme le tronçon de couloir et le bout de la travée est.
     //   . 0 .      index : 0 (1,0)   1 (1,1)   2 (1,2)
     //   . 1 .                3 (0,3)  4 (1,3)   5 (2,3)
     //   . 2 .                6 (1,4)
     //   3 4 5
-    //   . 6 .
+    
     grid: [
+      [1, 1, 0],
       [0, 1, 0],
-      [0, 1, 0],
-      [0, 1, 0],
-      [1, 1, 1],
-      [0, 1, 0],
+      [0, 1, 1],
+      
     ],
-    start: { cell: 0, yawDeg: 0 },
+    start: { cell: 0, yawDeg: 40 },
     paintings: [
       [art('joconde', { left_plant: true }), art('nuit', { right_plant: true }), art('vague')], // 0 : N, E, O
-      [art('venus', { bench: true }), art('cri')], // 1 : E, O
+      [art('venus', { bench: true, right_plant: true }), art('cri')], // 1 : E, O
       [], // 2 : tronçon de couloir, sans tableau
-      [art('perle', { bench: true }), art('baiser', { right_plant: true })], // 3 : N, S (+ O vide)
-      [], // 4 : carrefour, aucun mur
-      [], // 5 : bout de la travée
-      [], // 6 : cul-de-sac
+      [art('perle', { bench: true, right_plant: true })], // 3 : N, S (+ O vide)
+      [art('baiser', { right_plant: true, bench: true })], // 6 : cul-de-sac
     ],
   },
   {
-    name: 'Anneau',
-    // Une boucle de 10 salles autour d'un vide central. Les quatre angles et quelques salles sont
+    name: '3',
+    // Une boucle de salles autour d'un vide central. Les quatre angles et quelques salles sont
     // vides (`[]`) : on les traverse pour passer d'un côté à l'autre.
-    //   0 1 2      index : 0 (0,0)  1 (1,0)  2 (2,0)
-    //   3 . 4              3 (0,1)  4 (2,1)
-    //   5 . 6              5 (0,2)  6 (2,2)
-    //   7 8 9              7 (0,3)  8 (1,3)  9 (2,3)
     grid: [
       [1, 1, 1],
-      [1, 0, 1],
-      [1, 0, 1],
-      [1, 1, 1],
+      [0, 0, 0],
+      [0, 1, 0],
     ],
-    start: { cell: 1, yawDeg: 180 },
+    start: { cell: 0, yawDeg: 180 },
+    
     paintings: [
-      [], // 0 : angle
-      [art('vague'), art('cri', { bench: true })], // 1 : N, S
-      [], // 2 : angle
-      [art('nuit'), art('joconde')], // 3 : E, O
-      [art('perle', { bench: true, left_plant: true }), art('venus')], // 4 : E, O
-      [], // 5 : côté sans tableau
-      [art('baiser', { bench: true })], // 6 : E
-      [], // 7 : angle
-      [], // 8 : côté sans tableau
-      [], // 9 : angle
+      [art('joconde', { left_plant: true }), art('venus', {right_plant: true})], 
+      [art('vague', { right_plant: true }), art('baiser', { bench: true, right_plant: true })],
+      [art('cri', { left_plant: true }, null, art('nuit', { bench: true }))],
+      [null, null, art('perle', { bench: true, right_plant: true })],
     ],
   },
 ];

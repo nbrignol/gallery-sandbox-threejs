@@ -61,8 +61,10 @@ export const artworks = {
   },
 };
 
-// Une œuvre du catalogue, avec sa déco (et au besoin d'autres champs surchargés)
+// Une œuvre du catalogue, avec sa déco (et au besoin d'autres champs surchargés).
+// `art(null, déco)` : un mur sans tableau, avec seulement de la déco.
 export function art(key, extra = {}) {
+  if (key == null) return { ...extra };
   const artwork = artworks[key];
   if (!artwork) throw new Error(`artworks : œuvre inconnue « ${key} ».`);
   return { ...artwork, ...extra };

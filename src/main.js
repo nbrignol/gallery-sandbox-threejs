@@ -18,7 +18,7 @@ import {
 import { currentGalleryIndex, galleries, galleryHref } from './data/galleries.js';
 import { gridToCells } from './world/grid.js';
 import { createRoom } from './world/room.js';
-import { assignToWalls, createGallery } from './world/gallery.js';
+import { assignToWalls, createGallery, paintingJobs } from './world/gallery.js';
 import { enableShadows } from './world/shadows.js';
 import { computePropPlacements, countPropModels, createProps } from './world/props.js';
 import { createRoomLights } from './world/roomLights.js';
@@ -154,7 +154,7 @@ async function init() {
   room.ao?.addContacts(placements);
 
   // Textures, tableaux et modèles se téléchargent en parallèle
-  paintingStep.setTotal(assignToWalls(room, paintingsByCell).length);
+  paintingStep.setTotal(paintingJobs(assignToWalls(room, paintingsByCell)).length);
   const modelTotal = countPropModels(placements);
   if (modelTotal > 0) modelStep.setTotal(modelTotal);
   else modelStep.remove();
