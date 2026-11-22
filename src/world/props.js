@@ -102,6 +102,7 @@ export async function createProps(placements) {
     const object = models[type].clone(true); // géométries et matériaux partagés
     object.position.set(x, 0, z);
     object.rotation.y = yaw;
+    if (type === 'bench') object.userData.bench = true; // cliquable : déplace la caméra (nav/picking.js)
     group.add(object);
   }
   group.name = 'props';

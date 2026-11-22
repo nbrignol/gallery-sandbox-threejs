@@ -11,17 +11,35 @@ export function findPaintingGroup(object) {
   return null;
 }
 
+// Idem pour un banc (objet marqué userData.bench). Retourne null si aucun.
+export function findBench(object) {
+  for (let o = object; o; o = o.parent) {
+    if (o.userData?.bench) return o;
+  }
+  return null;
+}
+
 // Picking par raycast depuis le pointeur. Les murs (`occluders`) sont dans le
-// raycast : un tableau caché derrière un mur n'est pas cliquable.
-// `onPick(group)` est appelé au clic sur un tableau (hors glisser) ;
-// `onHover(group|null)` quand le tableau survolé change ; le curseur devient
-// une main au survol. Retourne { dispose }.
-export function createPicking({ canvas, camera, paintings, occluders, onPick, onHover }) {
+// raycast : un tableau ou un banc caché derrière un mur n'est pas cliquable.
+// `onPick(group)` est appelé au clic sur un tableau (hors glisser), `onPickBench(bench)`
+// au clic sur un banc ; `onHover(group|null)` quand le tableau survolé change (le banc
+// n'a pas de halo) ; le curseur devient un doigt au survol des deux. Retourne { dispose }.
+export function createPicking({
+  canvas,
+  camera,
+  paintings,
+  benches = [],
+  occluders,
+  onPick,
+  onPickBench,
+  onHover,
+}) {
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
-  const targets = [...paintings, ...occluders];
+  const targets = [...paintings, ...benches, ...occluders];
 
-  // Tableau sous le pointeur (le plus proche, murs compris), sinon null
+  // Objet cliquable sous le pointeur (le plus proche, murs compris) :
+  // { painting, bench }, tous deux null si rien (ou un mur)
   function pick(event) {
     const rect = canvas.getBoundingClientRect();
     pointer.set(
@@ -30,17 +48,20 @@ export function createPicking({ canvas, camera, paintings, occluders, onPick, on
     );
     raycaster.setFromCamera(pointer, camera);
     const hit = raycaster.intersectObjects(targets, true)[0];
-    return hit ? findPaintingGroup(hit.object) : null;
+    return {
+      painting: hit ? findPaintingGroup(hit.object) : null,
+      bench: hit ? findBench(hit.object) : null,
+    };
   }
 
   // Survol (souris uniquement)
   let hovered = null;
 
-  function setHovered(group) {
-    canvas.style.cursor = group ? 'pointer' : '';
-    if (group === hovered) return;
-    hovered = group;
-    onHover?.(group);
+  function setHovered({ painting, bench }) {
+    canvas.style.cursor = painting || bench ? 'pointer' : '';
+    if (painting === hovered) return;
+    hovered = painting;
+    onHover?.(painting);
   }
 
   function onMove(event) {
@@ -48,7 +69,7 @@ export function createPicking({ canvas, camera, paintings, occluders, onPick, on
   }
 
   function onLeave() {
-    setHovered(null);
+    setHovered({ painting: null, bench: null });
   }
 
   // Clic = appui puis relâchement à moins de CLICK_MAX_MOVE px (sinon : glisser)
@@ -63,8 +84,9 @@ export function createPicking({ canvas, camera, paintings, occluders, onPick, on
     const moved = Math.hypot(event.clientX - downAt.x, event.clientY - downAt.y);
     downAt = null;
     if (moved >= CLICK_MAX_MOVE) return;
-    const group = pick(event);
-    if (group) onPick(group);
+    const { painting, bench } = pick(event);
+    if (painting) onPick(painting);
+    else if (bench) onPickBench?.(bench);
   }
 
   canvas.addEventListener('pointermove', onMove);

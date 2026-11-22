@@ -30,7 +30,7 @@ export const paintings = [
     },
     {
       src: '/paintings/naissance-de-venus.jpg',
-      bench: false,
+      bench: true,
       right_plant: false,
       left_plant: false,
       scale: 1.725, // vraie valeur ; taille réelle : 172,5 × 278,5 cm (hauteur × largeur)

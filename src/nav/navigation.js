@@ -1,5 +1,11 @@
 import * as THREE from 'three';
-import { CLOSE_BACKOFF_DISTANCE, PANEL_FADE_START, PANEL_HIDE_ANGLE, PANEL_SHOW_ANGLE } from '../config.js';
+import {
+  CLOSE_BACKOFF_DISTANCE,
+  EYE_HEIGHT,
+  PANEL_FADE_START,
+  PANEL_HIDE_ANGLE,
+  PANEL_SHOW_ANGLE,
+} from '../config.js';
 import { createPanel } from '../ui/panel.js';
 import { wrapAngle } from './angle.js';
 import { createHighlight } from './highlight.js';
@@ -19,7 +25,7 @@ function fadeForAngle(degrees) {
 // États : 'idle' (départ), 'moving' (déplacement en cours : glisser et clics
 // désactivés, panneau masqué), 'atPainting' (arrivé : glisser actif, panneau
 // selon l'angle). Retourne { goTo(id), update(dt) }.
-export function createNavigation({ canvas, camera, paintings, occluders }) {
+export function createNavigation({ canvas, camera, paintings, benches = [], occluders }) {
   const look = createLook(canvas, camera);
   const travel = createTravel(camera, look);
   const highlight = createHighlight(paintings);
@@ -102,6 +108,22 @@ export function createNavigation({ canvas, camera, paintings, occluders }) {
     travel.start(paintings[id].userData.viewpoint, () => arrive(id));
   }
 
+  // Clic sur un banc : la caméra se déplace au-dessus de lui, sans toucher à la rotation
+  // (le yaw cible = le yaw actuel). Pas de panneau ; on repasse en 'idle' à l'arrivée.
+  function moveToBench(bench) {
+    if (state.name === 'moving') return;
+    intro.cancel();
+    state = { name: 'moving', id: null };
+    panelOpen = false;
+    hidePanel();
+    look.setEnabled(false);
+    const position = new THREE.Vector3(bench.position.x, EYE_HEIGHT, bench.position.z);
+    travel.start({ position, yaw: look.getYaw() }, () => {
+      state = { name: 'idle', id: null };
+      look.setEnabled(true);
+    });
+  }
+
   // Panneau lié à l'angle : disparaît au-delà de HIDE_ANGLE, réapparaît sous
   // SHOW_ANGLE (hystérésis), fondu entre FADE_START et HIDE_ANGLE
   function updatePanelVisibility() {
@@ -116,8 +138,10 @@ export function createNavigation({ canvas, camera, paintings, occluders }) {
     canvas,
     camera,
     paintings,
+    benches,
     occluders,
     onPick: (group) => goTo(group.userData.paintingId),
+    onPickBench: moveToBench,
     onHover: (group) => (hoveredGroup = group),
   });
 

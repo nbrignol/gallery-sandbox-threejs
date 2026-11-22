@@ -126,6 +126,7 @@ async function init() {
     canvas: renderer.domElement,
     camera,
     paintings: gallery.paintings,
+    benches: props.children.filter((object) => object.userData.bench),
     occluders: room.occluders,
   });
 
