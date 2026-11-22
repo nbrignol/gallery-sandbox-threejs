@@ -5,6 +5,7 @@ import {
   ENV_INTENSITY,
   EYE_HEIGHT,
   FLOOR_ENV_INTENSITY,
+  SD_PIXEL_RATIO,
   SCENE_BACKGROUND,
   SITE_NAME,
   START_CELL,
@@ -24,7 +25,9 @@ import { computePropPlacements, createProps } from './world/props.js';
 import { createRoomLights } from './world/roomLights.js';
 import { floorMaterial } from './world/materials.js';
 import { createNavigation } from './nav/navigation.js';
+import { createQuality, setupQualityUI } from './world/quality.js';
 import './ui/header.css';
+import './ui/quality.css';
 
 // Affiche le nom dans l'en-tête
 function setupHeader() {
@@ -35,7 +38,6 @@ function setupHeader() {
 function createRenderer() {
   const canvas = document.getElementById('scene');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   // Tone mapping neutre : évite les zones brûlées sans altérer les couleurs des tableaux
   renderer.toneMapping = THREE.NeutralToneMapping;
   renderer.toneMappingExposure = TONE_EXPOSURE;
@@ -73,11 +75,14 @@ function createCamera(start) {
   return camera;
 }
 
-// Redimensionnement : renderer et caméra suivent la fenêtre
+// Redimensionnement : renderer et caméra suivent la fenêtre.
+// Retourne `setSD(on)` : résolution interne réduite (SD) ou native (HD), canvas toujours étiré.
 function setupResize(renderer, camera, afterResize) {
+  let sd = false;
   function onResize() {
     const w = window.innerWidth;
     const h = window.innerHeight;
+    renderer.setPixelRatio(sd ? SD_PIXEL_RATIO : Math.min(window.devicePixelRatio, 2));
     renderer.setSize(w, h, false); // la taille CSS est gérée par header.css
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
@@ -85,6 +90,10 @@ function setupResize(renderer, camera, afterResize) {
   }
   window.addEventListener('resize', onResize);
   onResize();
+  return (on) => {
+    sd = on;
+    onResize();
+  };
 }
 
 // Boucle de rendu ; `update(dt)` est appelée à chaque image
@@ -150,7 +159,8 @@ async function init() {
   navigation.look.setYaw(THREE.MathUtils.degToRad(START_YAW_DEG));
   navigation.playIntro();
 
-  setupResize(renderer, camera, navigation.refitTopView);
+  const setSD = setupResize(renderer, camera, navigation.refitTopView);
+  setupQualityUI(createQuality({ renderer, scene, camera, roomLights, applyPixelRatio: setSD }));
   startLoop(renderer, scene, camera, (dt) => {
     navigation.update(dt);
     roomLights.update(camera);

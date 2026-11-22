@@ -44,7 +44,7 @@ const loader = new THREE.TextureLoader();
 // Charge une carte : répétition activée ; la couleur est en sRGB, la normal
 // map et la rugosité restent en espace linéaire (défaut).
 function loadMap(folder, file, isColor = false) {
-  const texture = loader.load(`/textures/${folder}/${file}`);
+  const texture = loader.load(`${import.meta.env.BASE_URL}textures/${folder}/${file}`);
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
   texture.anisotropy = 8;
@@ -104,3 +104,19 @@ export function createFrameMaterial(color = FRAME_COLOR) {
   return new THREE.MeshStandardMaterial({ color, roughness: 0.6, metalness: 0.1 });
 }
 export const frameMaterial = createFrameMaterial();
+
+// Relief (normal maps + anisotropie) des surfaces PBR : désactivé en mode minimal.
+const reliefMaterials = [floorMaterial, wallMaterial, plinthBottomMaterial, plinthTopMaterial];
+const reliefNormalMaps = new Map(reliefMaterials.map((material) => [material, material.normalMap]));
+const ANISOTROPY = 8;
+
+export function setReliefEnabled(on) {
+  for (const material of reliefMaterials) {
+    material.normalMap = on ? reliefNormalMaps.get(material) : null;
+    for (const texture of [material.map, reliefNormalMaps.get(material)]) {
+      texture.anisotropy = on ? ANISOTROPY : 1;
+      texture.needsUpdate = true;
+    }
+    material.needsUpdate = true;
+  }
+}

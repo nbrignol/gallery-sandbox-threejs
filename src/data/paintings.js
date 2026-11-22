@@ -19,7 +19,7 @@
 export const paintings = [
   [
     {
-      src: '/paintings/mona-lisa.jpg',
+      src: `${import.meta.env.BASE_URL}paintings/mona-lisa.jpg`,
       bench: false,
       right_plant: false,
       left_plant: true,
@@ -28,7 +28,7 @@ export const paintings = [
       desc: 'Léonard de Vinci, v. 1503-1519. Portrait de Lisa Gherardini, huile sur bois de peuplier, musée du Louvre.',
     },
     {
-      src: '/paintings/naissance-de-venus.jpg',
+      src: `${import.meta.env.BASE_URL}paintings/naissance-de-venus.jpg`,
       bench: true,
       right_plant: false,
       left_plant: false,
@@ -39,7 +39,7 @@ export const paintings = [
   ],
   [
     {
-      src: '/paintings/nuit-etoilee.jpg',
+      src: `${import.meta.env.BASE_URL}paintings/nuit-etoilee.jpg`,
       bench: false,
       right_plant: false,
       left_plant: false,
@@ -48,7 +48,7 @@ export const paintings = [
       desc: 'Vincent van Gogh, 1889. Ciel tourbillonnant au-dessus de Saint-Rémy-de-Provence, huile sur toile, MoMA.',
     },
     {
-      src: '/paintings/jeune-fille-perle.jpg',
+      src: `${import.meta.env.BASE_URL}paintings/jeune-fille-perle.jpg`,
       bench: true,
       right_plant: true,
       left_plant: false,
@@ -57,7 +57,7 @@ export const paintings = [
       desc: 'Johannes Vermeer, v. 1665. Tronie à la perle et au turban bleu, huile sur toile, Mauritshuis.',
     },
     {
-      src: '/paintings/grande-vague.jpg',
+      src: `${import.meta.env.BASE_URL}paintings/grande-vague.jpg`,
       bench: false,
       right_plant: false,
       left_plant: false,
@@ -68,7 +68,7 @@ export const paintings = [
   ],
   [
     {
-      src: '/paintings/le-cri.jpg',
+      src: `${import.meta.env.BASE_URL}paintings/le-cri.jpg`,
       bench: false,
       right_plant: false,
       left_plant: false,
@@ -77,7 +77,7 @@ export const paintings = [
       desc: 'Edvard Munch, 1893. Figure angoissée sur un pont au ciel rouge sang, tempera et crayon sur carton, Nasjonalmuseet.',
     },
     {
-      src: '/paintings/le-baiser.jpg',
+      src: `${import.meta.env.BASE_URL}paintings/le-baiser.jpg`,
       bench: true,
       right_plant: true,
       left_plant: false,

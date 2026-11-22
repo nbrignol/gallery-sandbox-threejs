@@ -51,14 +51,18 @@ export const AO_MAX_TEXTURE_SIZE = 2048; // taille max (px) de la texture d'AO d
 export const AO_PIXELS_PER_METER = 64; // résolution des textures d'AO
 
 // Objets déco (Poly Haven, public/models/) : banc au centre d'une pièce, plantes aux coins
-export const BENCH_MODEL = '/models/Ottoman_01/Ottoman_01_1k.gltf';
-export const PLANT_MODEL = '/models/potted_plant_02/potted_plant_02_1k.gltf';
+export const BENCH_MODEL = `${import.meta.env.BASE_URL}models/Ottoman_01/Ottoman_01_1k.gltf`;
+export const PLANT_MODEL = `${import.meta.env.BASE_URL}models/potted_plant_02/potted_plant_02_1k.gltf`;
 export const BENCH_SCALE = 1; // échelle du banc (1 = taille d'origine du modèle)
 export const PLANT_SCALE = 1; // échelle des plantes
 export const PLANT_CORNER_INSET = 0.5; // distance de la plante aux deux murs du coin (m)
 export const BENCH_CONTACT_RADIUS = 0.6; // rayon de l'ombre de contact du banc (m)
 export const PLANT_HITBOX_PADDING = 0.1; // marge de la boîte de clic invisible autour d'une plante (m, au total)
 export const PLANT_CONTACT_RADIUS = 0.5; // rayon de l'ombre de contact des plantes (m)
+
+// Qualité (cases à cocher en bas à droite)
+export const MINIMAL_AMBIENT_BOOST = 1.5; // mode minimal : l'ambiance (hémisphère) est multipliée par ce facteur (spots éteints)
+export const SD_PIXEL_RATIO = 0.5; // mode SD : résolution interne = cette part de la taille de l'écran (le canvas est étiré)
 
 // Caméra
 export const EYE_HEIGHT = 1.6; // hauteur des yeux (m)

@@ -1,4 +1,9 @@
-import { CELL_LIGHT_SCOPE, HEMI_INTENSITY, TOP_VIEW_AMBIENT_BOOST } from '../config.js';
+import {
+  CELL_LIGHT_SCOPE,
+  HEMI_INTENSITY,
+  MINIMAL_AMBIENT_BOOST,
+  TOP_VIEW_AMBIENT_BOOST,
+} from '../config.js';
 
 // Éclairage par pièce, pour tenir la limite de textures du shader (16) et la mémoire quelle
 // que soit la taille du bâtiment :
@@ -27,6 +32,13 @@ export function createRoomLights(room, paintings) {
 
   let current = null;
   let spotsOff = false; // vue du dessus : tous les spots éteints
+  let minimal = false; // mode minimal : spots éteints, seule la lampe de la pièce courante
+
+  // Ambiance : renforcée en vue du dessus et en mode minimal (spots éteints)
+  function applyAmbient() {
+    const boost = Math.max(spotsOff ? TOP_VIEW_AMBIENT_BOOST : 1, minimal ? MINIMAL_AMBIENT_BOOST : 1);
+    room.hemisphere.intensity = HEMI_INTENSITY * boost;
+  }
 
   // Allume les spots de la pièce `cellIndex` et les lampes de la pièce et de ses voisines,
   // éteint tout le reste
@@ -34,10 +46,10 @@ export function createRoomLights(room, paintings) {
     if (cellIndex === current) return;
     current = cellIndex;
     for (const [cell, spots] of spotsByCell) {
-      for (const spot of spots) spot.visible = cell === cellIndex;
+      for (const spot of spots) spot.visible = !minimal && cell === cellIndex;
     }
-    if (CELL_LIGHT_SCOPE !== 'all') {
-      const lit = new Set([cellIndex, ...room.cells[cellIndex].neighbors]);
+    if (minimal || CELL_LIGHT_SCOPE !== 'all') {
+      const lit = new Set(minimal ? [cellIndex] : [cellIndex, ...room.cells[cellIndex].neighbors]);
       room.cellLights.forEach((light, cell) => (light.visible = lit.has(cell)));
     }
   }
@@ -49,7 +61,7 @@ export function createRoomLights(room, paintings) {
   function setSpotsOff(off, nearPosition) {
     spotsOff = off;
     current = null;
-    room.hemisphere.intensity = HEMI_INTENSITY * (off ? TOP_VIEW_AMBIENT_BOOST : 1);
+    applyAmbient();
     if (off) {
       for (const spots of spotsByCell.values()) for (const spot of spots) spot.visible = false;
     } else if (nearPosition) {
@@ -58,8 +70,17 @@ export function createRoomLights(room, paintings) {
     }
   }
 
+  // Mode minimal : bascule à chaud (la prochaine `update` réapplique l'éclairage de la pièce)
+  function setMinimal(on) {
+    minimal = on;
+    current = null;
+    applyAmbient();
+    if (!on && CELL_LIGHT_SCOPE === 'all') room.cellLights.forEach((light) => (light.visible = true));
+  }
+
   return {
     setSpotsOff,
+    setMinimal,
     // Calcule toutes les cartes d'ombre : un rendu par cellule
     bake(renderer, scene, camera) {
       for (let cellIndex = 0; cellIndex < room.cells.length; cellIndex++) {
