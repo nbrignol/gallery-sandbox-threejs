@@ -20,6 +20,7 @@ export function createHover({ canvas, camera, cards, enabled = () => true }) {
   const pointer = new THREE.Vector2();
   const tilt = THREE.MathUtils.degToRad(HOVER_TILT_DEG);
   let hovered = null;
+  let keyboard = false; // la sélection vient du clavier : le pointeur ne la lâche qu'en bougeant
   // Carte « ouverte » : celle dont les voisines sont écartées (et qui monte une fois l'écart fait).
   // Elle suit la carte survolée avec un ordre fixe : écarter PUIS monter ; redescendre PUIS refermer.
   let current = -1;
@@ -64,6 +65,7 @@ export function createHover({ canvas, camera, cards, enabled = () => true }) {
   }
 
   function pick() {
+    keyboard = false;
     raycaster.setFromCamera(pointer, camera);
     const hit = raycaster.intersectObjects(hitboxes, false)[0];
     hovered = hit && enabled() ? hit.object.userData.card : null;
@@ -79,6 +81,7 @@ export function createHover({ canvas, camera, cards, enabled = () => true }) {
     pick();
   });
   canvas.addEventListener('pointerleave', () => {
+    if (keyboard) return;
     hovered = null;
     canvas.style.cursor = '';
   });
@@ -88,6 +91,13 @@ export function createHover({ canvas, camera, cards, enabled = () => true }) {
       return hovered;
     },
     cardAt,
+    // Sélection au clavier (même effet que le survol) ; null pour désélectionner
+    select(card) {
+      if (!enabled()) return;
+      keyboard = card !== null;
+      hovered = card;
+      canvas.style.cursor = '';
+    },
     // Décalage X (m) dû à l'écartement des voisines : la pioche en tient compte pour son point de départ/d'arrivée
     pushOffset: (card) => states[cards.indexOf(card)].push * HOVER_NEIGHBOR_PUSH,
     count: cards.length,

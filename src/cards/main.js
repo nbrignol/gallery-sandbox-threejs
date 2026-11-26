@@ -109,9 +109,28 @@ const panel = createCardPanel({
 });
 flow = createFlow({ canvas, camera, hover, panel });
 
-// Échap : reposer la carte flottante
+// Clavier : sur la table, ← → sélectionnent une carte (comme le survol) et Entrée la pioche ;
+// carte flottante : ← → affichent la précédente / suivante, Échap la repose.
 window.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape') flow.drop();
+  if (event.repeat || event.altKey || event.ctrlKey || event.metaKey) return;
+  const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+  if (step) {
+    event.preventDefault();
+    if (flow.isFloating()) flow.goTo(step);
+    else if (!flow.isActive()) {
+      const current = hover.hovered ? cards.indexOf(hover.hovered) : -1;
+      const next = current < 0 ? (step > 0 ? 0 : cards.length - 1) : (current + step + cards.length) % cards.length;
+      hover.select(cards[next]);
+    }
+  } else if (event.key === 'Enter') {
+    if (!flow.isActive() && hover.hovered) {
+      event.preventDefault();
+      flow.start(hover.hovered, clock.elapsedTime);
+    }
+  } else if (event.key === 'Escape') {
+    if (flow.isFloating()) flow.drop();
+    else if (!flow.isActive()) hover.select(null);
+  }
 });
 
 // Test : ?carte=2 ouvre directement la 2e carte (&p=0.5 : à mi-course)
