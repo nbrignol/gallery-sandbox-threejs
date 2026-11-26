@@ -95,3 +95,12 @@ export const TOOLTIP_FONT = '600 42px system-ui, -apple-system, "Segoe UI", sans
 export const TOOLTIP_FADE = 14; // vitesse du fondu (plus grand = plus rapide)
 export const TOOLTIP_OUTLINE_MARGIN = 0.03; // le rectangle déborde de la carte de ce montant, de chaque côté (m)
 export const TOOLTIP_OUTLINE_WIDTH = 0.01; // épaisseur du trait du rectangle (m)
+
+// AO de contact : une ombre douce sous chaque carte, qui s'étale et s'estompe quand la carte monte
+export const AO_STRENGTH = 0.4; // opacité maximale (carte posée)
+export const AO_MARGIN = 0.07; // largeur du dégradé au-delà du bord de la carte (m)
+export const AO_CURVE = 2; // dureté du dégradé (1 = linéaire, plus grand = plus serré contre la carte)
+export const AO_FADE_HEIGHT = 0.3; // hauteur de montée (m) à laquelle l'AO a disparu
+export const AO_SPREAD = 2; // élargissement par mètre de montée
+export const AO_OFFSET_Z = 0.015; // décalage de l'AO vers l'avant (+Z, côté caméra) : on ne voit presque plus l'ombre derrière la carte (m)
+export const AO_SQUASH_Z = 0.3; // écrase l'ombre en profondeur : 1 = carré, 0.5 = marge deux fois plus courte devant/derrière que sur les côtés

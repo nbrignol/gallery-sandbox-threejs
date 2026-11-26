@@ -28,6 +28,7 @@ import { createFloor } from './floor.js';
 import { createCard, loadBackTexture } from './card.js';
 import { createHover } from './hover.js';
 import { createFlow } from './flow.js';
+import { createContactAO } from './contactAO.js';
 import { createTooltip } from './tooltip.js';
 import { createCardPanel } from './panel.js';
 import './cards.css';
@@ -109,6 +110,7 @@ const panel = createCardPanel({
   onNext: () => flow.goTo(1),
 });
 flow = createFlow({ canvas, camera, hover, panel });
+const contactAO = createContactAO({ scene, cards });
 const tooltip = createTooltip({ scene, camera, anchorOf: hover.anchorOf });
 
 // Clavier : sur la table, ← → sélectionnent une carte (comme le survol) et Entrée la pioche ;
@@ -158,6 +160,7 @@ renderer.setAnimationLoop(() => {
   const dt = Math.min(clock.getDelta(), 0.1);
   hover.update(dt, clock.elapsedTime);
   flow.update(dt, clock.elapsedTime);
+  contactAO.update();
   tooltip.update(dt, flow.isActive() ? null : hover.hovered);
   renderer.render(scene, camera);
 });
