@@ -23,6 +23,8 @@ export function createHover({ canvas, camera, cards, enabled = () => true }) {
   // Carte « ouverte » : celle dont les voisines sont écartées (et qui monte une fois l'écart fait).
   // Elle suit la carte survolée avec un ordre fixe : écarter PUIS monter ; redescendre PUIS refermer.
   let current = -1;
+  // Cartes pilotées ailleurs (pioche) : le survol n'écrit plus leur pose
+  const controlled = new Set();
 
   const states = cards.map((card, i) => ({
     card,
@@ -49,6 +51,18 @@ export function createHover({ canvas, camera, cards, enabled = () => true }) {
     return hitbox;
   });
 
+  // Carte sous un point de l'écran (en pixels client), sur les plans fixes
+  function cardAt(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const ndc = new THREE.Vector2(
+      ((clientX - rect.left) / rect.width) * 2 - 1,
+      -((clientY - rect.top) / rect.height) * 2 + 1,
+    );
+    raycaster.setFromCamera(ndc, camera);
+    const hit = raycaster.intersectObjects(hitboxes, false)[0];
+    return hit ? hit.object.userData.card : null;
+  }
+
   function pick() {
     raycaster.setFromCamera(pointer, camera);
     const hit = raycaster.intersectObjects(hitboxes, false)[0];
@@ -73,6 +87,19 @@ export function createHover({ canvas, camera, cards, enabled = () => true }) {
     get hovered() {
       return hovered;
     },
+    cardAt,
+    count: cards.length,
+    control(card) {
+      controlled.add(card);
+    },
+    // Rend la carte au survol : remise à zéro de son état (elle est revenue à sa pose de repos)
+    release(card) {
+      controlled.delete(card);
+      const state = states.find((s) => s.card === card);
+      state.amount = 0;
+      state.shakeTime = Infinity;
+      state.wasLifting = false;
+    },
     // dt en secondes, time = temps écoulé en secondes
     update(dt, time) {
       if (!enabled() && hovered) {
@@ -80,7 +107,10 @@ export function createHover({ canvas, camera, cards, enabled = () => true }) {
         canvas.style.cursor = '';
       }
       const k = 1 - Math.exp(-HOVER_SMOOTH * dt);
-      const goal = hovered ? cards.indexOf(hovered) : -1;
+      // Une carte piochée garde ses voisines écartées pendant toute son animation
+      const held = controlled.size ? cards.indexOf([...controlled][0]) : -1;
+      if (held >= 0) current = held;
+      const goal = held >= 0 ? held : hovered ? cards.indexOf(hovered) : -1;
       const isNeighbor = (i) => current >= 0 && Math.abs(i - current) === 1;
 
       // 1. La carte courante n'est plus visée : elle redescend d'abord, puis on lâche/change de cible
@@ -97,6 +127,7 @@ export function createHover({ canvas, camera, cards, enabled = () => true }) {
         state.push += (pushTarget - state.push) * k;
         const liftTarget = i === current && i === goal && spread ? 1 : 0;
         state.amount += (liftTarget - state.amount) * k;
+        if (controlled.has(card)) continue;
         const a = state.amount;
         // Vibration unique : HOVER_SHAKE_CYCLES allers-retours amortis, déclenchés quand la carte commence à monter
         if (liftTarget && !state.wasLifting) state.shakeTime = 0;

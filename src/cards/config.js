@@ -57,3 +57,18 @@ export const SHADOW_BIAS = -0.0004;
 export const SHADOW_NORMAL_BIAS = 0.01;
 export const SHADOW_RADIUS = 4; // douceur du bord
 export const SHADOW_INTENSITY = 0.5; // opacité des ombres : 1 = noires, 0 = invisibles
+
+// Pioche : la carte se courbe, se retourne et vient flotter face à la caméra
+export const LIFT_DURATION = 1.4; // posée → flottante (s)
+export const DROP_DURATION = 0.9; // flottante → posée (s)
+export const BEND_MAX_ANGLE = 1.6; // angle (rad) de la tangente au bord relevé, au plus fort de la courbure
+export const BEND_PEAK = 0.35; // progression (0-1) où la courbure est maximale : elle se forme AVANT que la carte monte
+export const MOVE_DELAY = 0.1; // progression à partir de laquelle la carte quitte le sol pour monter : avant, elle se courbe et glisse au sol
+export const MOVE_OVERLAP = 0.0; // la montée démarre MOVE_OVERLAP avant la fin du glissement : pas de temps mort entre les deux phases
+export const SLIDE_DISTANCE = 0.7; // glissement au sol vers la caméra (+Z) pendant la courbure (m)
+export const FLOAT_DISTANCE = 3; // distance de la carte flottante à la caméra (m)
+export const FLOAT_HEIGHT_FRACTION = 0.62; // part de la hauteur de l'écran occupée par la carte flottante
+export const FLOAT_SCREEN_X = -0.36; // position horizontale à l'écran (-1 = bord gauche, 1 = bord droit) ; le panneau est à droite
+export const FLOAT_ARC = 0.5; // la trajectoire passe par un point plus haut (m)
+export const FLOAT_BOB = 0.02; // amplitude du léger flottement (m)
+export const FLOAT_BOB_TILT_DEG = 1.2; // amplitude de l'inclinaison du flottement (°)

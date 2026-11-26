@@ -72,8 +72,52 @@ export function createCard({ config, artwork, index, backTexture }) {
   const mesh = new THREE.Mesh(createCardGeometry(), materials);
   mesh.position.set(config.offsetX, CARD_THICKNESS / 2 + index * CARD_STACK_STEP, config.offsetZ);
   mesh.rotation.y = THREE.MathUtils.degToRad(config.rotationDeg);
-  mesh.userData = { index, artwork, config };
+  mesh.frustumCulled = false; // la courbure sort du volume de repos
+  mesh.userData = {
+    index,
+    artwork,
+    config,
+    rest: { position: mesh.position.clone(), quaternion: mesh.quaternion.clone() },
+  };
   return mesh;
 }
 
 export const loadBackTexture = loadTexture;
+
+// Courbure « pioche » : le bord +Z se relève, comme quand on soulève une carte par un côté.
+// `angle` = angle (rad) de la tangente au bord relevé ; 0 = carte plate (pose de repos exacte).
+// Le profil est quadratique : la tangente tourne de plus en plus vers le bord relevé
+// (φ(u) = angle·u², u de 0 au bord fixe à 1 au bord relevé), puis on intègre le long de la carte.
+// Dos (+e) et face (-e) sont décalés le long de la normale de la courbe.
+export function bendCard(mesh, angle) {
+  const geometry = mesh.geometry;
+  const rest = geometry.userData.restPositions;
+  const position = geometry.attributes.position;
+  const n = CARD_SEGMENTS;
+  const row = n + 1;
+  const grid = row * row;
+  const step = CARD_SIZE / n;
+
+  let z = -CARD_SIZE / 2;
+  let y = 0;
+  for (let j = 0; j <= n; j++) {
+    if (j > 0) {
+      const mid = (j - 0.5) / n;
+      const phiMid = angle * mid * mid;
+      z += step * Math.cos(phiMid);
+      y += step * Math.sin(phiMid);
+    }
+    const u = j / n;
+    const phi = angle * u * u;
+    const sin = Math.sin(phi);
+    const cos = Math.cos(phi);
+    for (let i = 0; i <= n; i++) {
+      for (const base of [j * row + i, grid + j * row + i]) {
+        const offset = rest[base * 3 + 1]; // ±e : côté dos / face
+        position.setXYZ(base, rest[base * 3], y + cos * offset, z - sin * offset);
+      }
+    }
+  }
+  position.needsUpdate = true;
+  geometry.computeVertexNormals();
+}

@@ -27,6 +27,8 @@ import {
 import { createFloor } from './floor.js';
 import { createCard, loadBackTexture } from './card.js';
 import { createHover } from './hover.js';
+import { createFlow } from './flow.js';
+import { createCardPanel } from './panel.js';
 import './cards.css';
 
 const canvas = document.getElementById('scene');
@@ -97,10 +99,29 @@ function fitCamera() {
 window.addEventListener('resize', fitCamera);
 fitCamera();
 
-const hover = createHover({ canvas, camera, cards });
+// Le survol est suspendu dès qu'une carte est piochée (flow est défini juste après)
+let flow = null;
+const hover = createHover({ canvas, camera, cards, enabled: () => !flow?.isActive() });
+const panel = createCardPanel({ onClose: () => flow.drop() });
+flow = createFlow({ canvas, camera, hover, panel });
+
+// Échap : reposer la carte flottante
+window.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') flow.drop();
+});
+
+// Test : ?carte=2 ouvre directement la 2e carte (&p=0.5 : à mi-course)
+const openParam = Number(new URLSearchParams(location.search).get('carte'));
+if (openParam >= 1 && openParam <= cards.length) {
+  flow.start(cards[openParam - 1], 0);
+  const seek = new URLSearchParams(location.search).get('p');
+  if (seek !== null) flow.seek(Number(seek));
+}
 
 const clock = new THREE.Clock();
 renderer.setAnimationLoop(() => {
-  hover.update(Math.min(clock.getDelta(), 0.1), clock.elapsedTime);
+  const dt = Math.min(clock.getDelta(), 0.1);
+  hover.update(dt, clock.elapsedTime);
+  flow.update(dt, clock.elapsedTime);
   renderer.render(scene, camera);
 });
