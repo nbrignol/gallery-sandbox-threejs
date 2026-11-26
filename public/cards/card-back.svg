@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <!-- Motif losange répété -->
+    <pattern id="diamonds" width="64" height="64" patternUnits="userSpaceOnUse">
+      <rect width="64" height="64" fill="#6b1f2e"/>
+      <path d="M32 6 L58 32 L32 58 L6 32 Z" fill="none" stroke="#c9a45c" stroke-width="2"/>
+      <path d="M32 20 L44 32 L32 44 L20 32 Z" fill="#c9a45c" fill-opacity="0.55"/>
+      <circle cx="0" cy="0" r="3" fill="#c9a45c"/><circle cx="64" cy="0" r="3" fill="#c9a45c"/>
+      <circle cx="0" cy="64" r="3" fill="#c9a45c"/><circle cx="64" cy="64" r="3" fill="#c9a45c"/>
+    </pattern>
+  </defs>
+  <rect width="512" height="512" fill="#4a1420"/>
+  <rect x="32" y="32" width="448" height="448" fill="url(#diamonds)"/>
+  <rect x="32" y="32" width="448" height="448" fill="none" stroke="#c9a45c" stroke-width="4"/>
+  <rect x="16" y="16" width="480" height="480" fill="none" stroke="#c9a45c" stroke-width="2"/>
+</svg>
