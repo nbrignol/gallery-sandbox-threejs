@@ -5,6 +5,9 @@ export const CARD_SIZE = 1.2; // côté d'une carte carrée (m)
 export const CARD_SEGMENTS = 24; // subdivisions par côté (pour animer la courbure)
 export const CARD_THICKNESS = 0.004; // écart entre le dos et la face (évite le z-fighting)
 export const CARD_STACK_STEP = 0.002; // surélévation de chaque carte suivante (ordre de recouvrement)
+export const CARD_FACE_TEXTURE_SIZE = 1024; // côté (px) de la texture de la face
+export const CARD_FACE_BORDER = 28; // bordure blanche (px, sur la texture de la face) autour du tableau
+export const CARD_FACE_COLOR = '#ffffff'; // couleur de la bordure
 export const CARD_BACK_TEXTURE = `${import.meta.env.BASE_URL}cards/card-back.svg`;
 
 // Disposition : une ligne, de gauche à droite. Un écart offsetX < CARD_SIZE entre deux voisines
@@ -72,3 +75,9 @@ export const FLOAT_SCREEN_X = -0.36; // position horizontale à l'écran (-1 = b
 export const FLOAT_ARC = 0.5; // la trajectoire passe par un point plus haut (m)
 export const FLOAT_BOB = 0.02; // amplitude du léger flottement (m)
 export const FLOAT_BOB_TILT_DEG = 1.2; // amplitude de l'inclinaison du flottement (°)
+
+// Navigation précédente / suivante : la carte suivante démarre quand la précédente a fait cette part de son retour
+export const NAV_OVERLAP = 0.35;
+export const NAV_SPEED = 1.8; // les mêmes animations, jouées plus vite quand on navigue (précédent / suivant)
+export const FLOAT_EMISSIVE = 1; // 1 = carte flottante affichée sans éclairage (texture brute) ; 0 = éclairée par la scène
+export const FLOAT_FLOOR_MARGIN = 0.05; // garde minimale entre le bas de la carte flottante et le sol (m)

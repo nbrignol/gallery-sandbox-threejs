@@ -3,6 +3,8 @@ import {
   BEND_MAX_ANGLE,
   BEND_PEAK,
   MOVE_DELAY,
+  NAV_OVERLAP,
+  NAV_SPEED,
   MOVE_OVERLAP,
   SLIDE_DISTANCE,
   CAMERA_FOV,
@@ -12,6 +14,8 @@ import {
   FLOAT_BOB,
   FLOAT_BOB_TILT_DEG,
   FLOAT_DISTANCE,
+  FLOAT_EMISSIVE,
+  FLOAT_FLOOR_MARGIN,
   FLOAT_HEIGHT_FRACTION,
   FLOAT_SCREEN_X,
   LIFT_DURATION,
@@ -33,17 +37,22 @@ const FACE_TO_CAMERA = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3
 // la caméra. La courbure précède la montée (voir applyPose) ; elle est nulle aux deux bouts.
 export function createFlow({ canvas, camera, hover, panel }) {
   const raycaster = new THREE.Raycaster();
-  let active = null; // { card, p, target, offset }
+  // Cartes en cours de pioche / flottantes / en retour : { card, p, target, offset, shown }.
+  // Pendant une navigation, deux cartes coexistent (celle qui repart, celle qui arrive).
+  const entries = [];
+  let pending = null; // { card, timer } : carte suivante, démarrée un peu après le début du retour de la précédente
 
   const floatPose = { position: new THREE.Vector3(), quaternion: new THREE.Quaternion(), scale: 1 };
   const tmp = {
     forward: new THREE.Vector3(),
     right: new THREE.Vector3(),
     start: new THREE.Vector3(),
+    base: new THREE.Vector3(),
     aimed: new THREE.Quaternion(),
     start2: new THREE.Quaternion(),
     q: new THREE.Quaternion(),
     euler: new THREE.Euler(),
+    up: new THREE.Vector3(),
   };
 
   // Pose flottante : à FLOAT_DISTANCE devant la caméra, décalée à gauche, face à l'écran
@@ -61,6 +70,10 @@ export function createFlow({ canvas, camera, hover, panel }) {
       (FLOAT_HEIGHT_FRACTION * 2 * halfHeight) / CARD_SIZE,
       (0.8 * 2 * halfWidth) / CARD_SIZE,
     );
+    // Le bas de la carte ne doit pas passer sous le sol (cadrage large : caméra plus basse)
+    tmp.up.set(0, 1, 0).applyQuaternion(camera.quaternion);
+    const bottom = floatPose.position.y - (CARD_SIZE * floatPose.scale * 0.5 + FLOAT_BOB) * Math.abs(tmp.up.y);
+    if (bottom < FLOAT_FLOOR_MARGIN) floatPose.position.y += FLOAT_FLOOR_MARGIN - bottom;
     floatPose.quaternion.copy(camera.quaternion).multiply(FACE_TO_CAMERA);
     // léger flottement
     const bob = Math.sin(time * 1.6) * FLOAT_BOB;
@@ -68,6 +81,21 @@ export function createFlow({ canvas, camera, hover, panel }) {
     const tilt = THREE.MathUtils.degToRad(FLOAT_BOB_TILT_DEG);
     tmp.euler.set(Math.sin(time * 1.1) * tilt, Math.sin(time * 0.8 + 1) * tilt, 0);
     floatPose.quaternion.multiply(tmp.q.setFromEuler(tmp.euler));
+  }
+
+  // Position de repos, avec l'écartement actuel dû aux voisines de la carte piochée
+  function restPosition(card) {
+    tmp.base.copy(card.userData.rest.position);
+    tmp.base.x += hover.pushOffset(card);
+    return tmp.base;
+  }
+
+  // k = 0 : face éclairée par la scène ; k = 1 : texture seule, sans aucune lumière (couleur noire + émissive = texture)
+  function setUnlit(card, k) {
+    const m = card.material[1];
+    m.emissiveIntensity = k;
+    m.color.setScalar(1 - k);
+    m.roughness = 0.7 + 0.3 * k;
   }
 
   function applyPose(state, time) {
@@ -87,10 +115,11 @@ export function createFlow({ canvas, camera, hover, panel }) {
     const slide = Math.sin((Math.min(1, p / MOVE_DELAY) * Math.PI) / 2); // freine en fin de glissement pendant que la montée démarre
     // Direction (au sol) de la carte vers la caméra : elle pivote autour de son centre (la « main »
     // est au centre) pour que son bord relevé (+Z local) pointe vers la caméra, et glisse dans ce sens.
-    const toX = camera.position.x - rest.position.x;
-    const toZ = camera.position.z - rest.position.z;
+    const base = restPosition(card);
+    const toX = camera.position.x - base.x;
+    const toZ = camera.position.z - base.z;
     const length = Math.hypot(toX, toZ) || 1;
-    tmp.start.copy(rest.position);
+    tmp.start.copy(base);
     tmp.start.x += (toX / length) * SLIDE_DISTANCE * slide;
     tmp.start.z += (toZ / length) * SLIDE_DISTANCE * slide;
     tmp.aimed.setFromAxisAngle(UP, Math.atan2(toX, toZ));
@@ -102,38 +131,46 @@ export function createFlow({ canvas, camera, hover, panel }) {
     card.quaternion.slerpQuaternions(tmp.start2, floatPose.quaternion, e);
     card.scale.setScalar(THREE.MathUtils.lerp(1, floatPose.scale, e));
     bendCard(card, BEND_MAX_ANGLE * bend);
+    setUnlit(card, FLOAT_EMISSIVE * e);
   }
 
-  function start(card, time) {
+  function start(card, time, speed = 1) {
     hover.control(card);
-    active = {
+    const entry = {
       card,
       p: 0,
       target: 1,
-      offset: card.position.clone().sub(card.userData.rest.position),
+      speed, // multiplicateur de vitesse de l'animation
+      offset: card.position.clone().sub(restPosition(card)),
       shown: false,
     };
-    applyPose(active, time);
+    entries.push(entry);
+    applyPose(entry, time);
+    return entry;
   }
 
-  function drop() {
-    active.target = 0;
-    active.offset.set(0, 0, 0); // au retour, on revient exactement à la pose de repos
+  function drop(entry, speed = 1) {
+    entry.target = 0;
+    entry.speed = speed;
+    entry.offset.set(0, 0, 0); // au retour, on revient exactement à la pose de repos
     panel.hide();
   }
 
-  function finish() {
-    const { card } = active;
-    const { rest } = card.userData;
-    card.position.copy(rest.position);
-    card.quaternion.copy(rest.quaternion);
+  function finish(entry) {
+    const { card } = entry;
+    card.position.copy(restPosition(card));
+    card.quaternion.copy(card.userData.rest.quaternion);
     card.scale.setScalar(1);
     bendCard(card, 0);
+    setUnlit(card, 0);
     hover.release(card);
-    active = null;
+    entries.splice(entries.indexOf(entry), 1);
   }
 
-  const isFloating = () => active && active.p === 1 && active.target === 1;
+  // La carte flottante : arrivée, sans aucune autre animation en cours
+  const floating = () =>
+    !pending && entries.length === 1 && entries[0].target === 1 && entries[0].p === 1 ? entries[0] : null;
+  const isFloating = () => floating() !== null;
 
   // Carte flottante sous le pointeur ? (raycast sur le vrai mesh, qui a bougé)
   function floatingCardAt(clientX, clientY) {
@@ -145,49 +182,70 @@ export function createFlow({ canvas, camera, hover, panel }) {
       ),
       camera,
     );
-    return raycaster.intersectObject(active.card, false).length > 0;
+    return raycaster.intersectObject(floating().card, false).length > 0;
   }
 
   let lastTime = 0;
   canvas.addEventListener('click', (event) => {
-    if (!active) {
+    if (entries.length === 0 && !pending) {
       const card = hover.cardAt(event.clientX, event.clientY);
       if (card) start(card, lastTime);
     } else if (isFloating() && floatingCardAt(event.clientX, event.clientY)) {
-      drop();
+      drop(floating());
     }
   });
   canvas.addEventListener('pointermove', (event) => {
     if (isFloating()) canvas.style.cursor = floatingCardAt(event.clientX, event.clientY) ? 'pointer' : '';
   });
 
+  // Carte précédente (-1) / suivante (+1), en boucle : la carte flottante repart pendant que la suivante arrive
+  function goTo(step) {
+    const current = floating();
+    if (!current) return;
+    const total = hover.count;
+    const next = hover.cards[(current.card.userData.index + step + total) % total];
+    drop(current, NAV_SPEED);
+    panel.setBusy(true);
+    pending = { card: next, timer: (DROP_DURATION * NAV_OVERLAP) / NAV_SPEED };
+  }
+
   return {
     // Une carte est en cours de pioche, flottante ou en retour : le survol est suspendu
-    isActive: () => active !== null,
+    isActive: () => entries.length > 0 || pending !== null,
     isFloating,
-    activeCard: () => active?.card ?? null,
     start,
+    goTo,
     // Test : fixe la progression de la carte active (?carte=2&p=0.5)
     seek(p) {
-      if (active) active.p = THREE.MathUtils.clamp(p, 0, 1);
+      if (entries[0]) entries[0].p = THREE.MathUtils.clamp(p, 0, 1);
     },
     drop() {
-      if (isFloating()) drop();
+      const current = floating();
+      if (current) drop(current);
     },
     update(dt, time) {
       lastTime = time;
-      if (!active) return;
-      const duration = active.target === 1 ? LIFT_DURATION : DROP_DURATION;
-      const step = dt / duration;
-      active.p = active.target === 1 ? Math.min(1, active.p + step) : Math.max(0, active.p - step);
-      applyPose(active, time);
-
-      if (active.target === 1 && active.p > 0.65 && !active.shown) {
-        active.shown = true;
-        const { artwork, index } = active.card.userData;
-        panel.show({ index, total: hover.count, title: artwork.title, desc: artwork.desc });
+      if (pending) {
+        pending.timer -= dt;
+        if (pending.timer <= 0) {
+          start(pending.card, time, NAV_SPEED);
+          pending = null;
+        }
       }
-      if (active.target === 0 && active.p === 0) finish();
+      for (const entry of [...entries]) {
+        const duration = entry.target === 1 ? LIFT_DURATION : DROP_DURATION;
+        const step = (dt * entry.speed) / duration;
+        entry.p = entry.target === 1 ? Math.min(1, entry.p + step) : Math.max(0, entry.p - step);
+        applyPose(entry, time);
+
+        if (entry.target === 1 && entry.p > 0.65 && !entry.shown) {
+          entry.shown = true;
+          const { artwork, index } = entry.card.userData;
+          panel.show({ index, total: hover.count, title: artwork.title, desc: artwork.desc });
+        }
+        if (entry.target === 0 && entry.p === 0) finish(entry);
+      }
+      if (floating()) panel.setBusy(false);
     },
   };
 }

@@ -102,7 +102,11 @@ fitCamera();
 // Le survol est suspendu dès qu'une carte est piochée (flow est défini juste après)
 let flow = null;
 const hover = createHover({ canvas, camera, cards, enabled: () => !flow?.isActive() });
-const panel = createCardPanel({ onClose: () => flow.drop() });
+const panel = createCardPanel({
+  onClose: () => flow.drop(),
+  onPrev: () => flow.goTo(-1),
+  onNext: () => flow.goTo(1),
+});
 flow = createFlow({ canvas, camera, hover, panel });
 
 // Échap : reposer la carte flottante

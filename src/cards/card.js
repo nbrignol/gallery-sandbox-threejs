@@ -1,5 +1,13 @@
 import * as THREE from 'three';
-import { CARD_SEGMENTS, CARD_SIZE, CARD_STACK_STEP, CARD_THICKNESS } from './config.js';
+import {
+  CARD_FACE_BORDER,
+  CARD_FACE_COLOR,
+  CARD_FACE_TEXTURE_SIZE,
+  CARD_SEGMENTS,
+  CARD_SIZE,
+  CARD_STACK_STEP,
+  CARD_THICKNESS,
+} from './config.js';
 
 const loader = new THREE.TextureLoader();
 
@@ -7,6 +15,44 @@ function loadTexture(url) {
   const texture = loader.load(url);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.anisotropy = 8;
+  return texture;
+}
+
+// Texture de la face : bordure blanche, et le tableau en « cover » (il remplit le carré restant,
+// sans déformation ; le surplus est rogné au centre). Dessinée dès le chargement de l'image.
+function loadFaceTexture(url) {
+  const size = CARD_FACE_TEXTURE_SIZE;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = CARD_FACE_COLOR;
+  ctx.fillRect(0, 0, size, size);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 8;
+
+  const image = new Image();
+  image.onload = () => {
+    // « cover » : le tableau remplit tout le carré intérieur ; le surplus est rogné, centré
+    const inner = size - 2 * CARD_FACE_BORDER;
+    const side = Math.min(image.width, image.height); // plus grand carré centré dans l'image
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(
+      image,
+      (image.width - side) / 2,
+      (image.height - side) / 2,
+      side,
+      side,
+      CARD_FACE_BORDER,
+      CARD_FACE_BORDER,
+      inner,
+      inner,
+    );
+    texture.needsUpdate = true;
+  };
+  image.src = url;
   return texture;
 }
 
@@ -67,7 +113,17 @@ function createCardGeometry() {
 export function createCard({ config, artwork, index, backTexture }) {
   const materials = [
     new THREE.MeshStandardMaterial({ map: backTexture, roughness: 0.7 }),
-    new THREE.MeshStandardMaterial({ map: loadTexture(artwork.src), roughness: 0.7 }),
+    (() => {
+      // emissiveMap = la face elle-même : sert à éclairer la carte flottante indépendamment du spot
+      const map = loadFaceTexture(artwork.src);
+      return new THREE.MeshStandardMaterial({
+        map,
+        roughness: 0.7,
+        emissive: 0xffffff,
+        emissiveMap: map,
+        emissiveIntensity: 0,
+      });
+    })(),
   ];
   const mesh = new THREE.Mesh(createCardGeometry(), materials);
   mesh.position.set(config.offsetX, CARD_THICKNESS / 2 + index * CARD_STACK_STEP, config.offsetZ);

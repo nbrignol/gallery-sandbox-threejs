@@ -88,7 +88,10 @@ export function createHover({ canvas, camera, cards, enabled = () => true }) {
       return hovered;
     },
     cardAt,
+    // Décalage X (m) dû à l'écartement des voisines : la pioche en tient compte pour son point de départ/d'arrivée
+    pushOffset: (card) => states[cards.indexOf(card)].push * HOVER_NEIGHBOR_PUSH,
     count: cards.length,
+    cards,
     control(card) {
       controlled.add(card);
     },
@@ -108,7 +111,7 @@ export function createHover({ canvas, camera, cards, enabled = () => true }) {
       }
       const k = 1 - Math.exp(-HOVER_SMOOTH * dt);
       // Une carte piochée garde ses voisines écartées pendant toute son animation
-      const held = controlled.size ? cards.indexOf([...controlled][0]) : -1;
+      const held = controlled.size ? cards.indexOf([...controlled].at(-1)) : -1; // la dernière piochée
       if (held >= 0) current = held;
       const goal = held >= 0 ? held : hovered ? cards.indexOf(hovered) : -1;
       const isNeighbor = (i) => current >= 0 && Math.abs(i - current) === 1;
