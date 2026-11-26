@@ -4,6 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Cartes</title>
+    <script>
+      document.documentElement.classList.add('js');
+    </script>
     <style>
       html {
         scrollbar-gutter: stable; /* pas de saut de mise en page quand on bloque le défilement en plein écran */
@@ -34,7 +37,10 @@
         font-size: 1.05rem;
       }
       /* Scène 3D intégrée à la colonne */
-      .cards-stage {
+      /* Avant que le script remplace la galerie : la liste est masquée et la place de la scène est déjà réservée
+         (même taille que .cards-stage, sans saut de mise en page). La classe .js évite de tout masquer sans script. */
+      .cards-stage,
+      .js .card-canvas-gallery {
         position: relative;
         /*aspect-ratio: 16 / 9;*/
         aspect-ratio: 2 / 1;
@@ -43,6 +49,9 @@
         overflow: hidden;
         border-radius: 6px;
         outline: none;
+      }
+      .js .card-canvas-gallery > * {
+        display: none;
       }
       /* Zone de dessin : remplit le bloc, ou passe en plein écran (position et taille pilotées par le script) */
       .cards-view {
@@ -119,12 +128,29 @@
         convallis vehicula. Nulla et sapien. Integer tortor tellus, aliquam faucibus, convallis id, congue eu, quam.
       </p>
 
-      <div class="cards-stage" id="stage" tabindex="0">
-        <div class="cards-backdrop" id="backdrop"></div>
-        <div class="cards-view" id="view">
-          <canvas id="scene"></canvas>
-        </div>
-        <div class="cards-loading" id="loading">...</div>
+      <div class="card-canvas-gallery">
+        <ul>
+          <li>
+            <img src="paintings/mona-lisa.jpg" alt="La Joconde" />
+            <h3>La Joconde</h3>
+            <p>Léonard de Vinci, v. 1503-1519. Portrait de Lisa Gherardini, huile sur bois de peuplier, musée du Louvre.</p>
+          </li>
+          <li>
+            <img src="paintings/nuit-etoilee.jpg" alt="La Nuit étoilée" />
+            <h3>La Nuit étoilée</h3>
+            <p>Vincent van Gogh, 1889. Ciel tourbillonnant au-dessus de Saint-Rémy-de-Provence, huile sur toile, MoMA.</p>
+          </li>
+          <li>
+            <img src="paintings/jeune-fille-perle.jpg" alt="La Jeune Fille à la perle" />
+            <h3>La Jeune Fille à la perle</h3>
+            <p>Johannes Vermeer, v. 1665. Tronie à la perle et au turban bleu, huile sur toile, Mauritshuis.</p>
+          </li>
+          <li>
+            <img src="paintings/le-baiser.jpg" alt="Le Baiser" />
+            <h3>Le Baiser</h3>
+            <p>Gustav Klimt, 1907-1908. Couple enlacé sur fond doré, huile et feuilles d’or sur toile, Belvédère de Vienne.</p>
+          </li>
+        </ul>
       </div>
 
       <p>
@@ -142,6 +168,26 @@
         aliquam ultrices mauris. Integer ante arcu, accumsan a, consectetuer eget, posuere ut, mauris. Praesent
         adipiscing. Phasellus ullamcorper ipsum rutrum nunc.
       </p>
+
+      <div class="card-canvas-gallery">
+        <ul>
+          <li>
+            <img src="paintings/naissance-de-venus.jpg" alt="La Naissance de Vénus" />
+            <h3>La Naissance de Vénus</h3>
+            <p>Sandro Botticelli, v. 1485. Vénus émerge de la mer sur une coquille, tempera sur toile, galerie des Offices.</p>
+          </li>
+          <li>
+            <img src="paintings/grande-vague.jpg" alt="La Grande Vague de Kanagawa" />
+            <h3>La Grande Vague de Kanagawa</h3>
+            <p>Hokusai, v. 1831. Estampe ukiyo-e de la série « Trente-six vues du mont Fuji ».</p>
+          </li>
+          <li>
+            <img src="paintings/le-cri.jpg" alt="Le Cri" />
+            <h3>Le Cri</h3>
+            <p>Edvard Munch, 1893. Figure angoissée sur un pont au ciel rouge sang, tempera et crayon sur carton, Nasjonalmuseet.</p>
+          </li>
+        </ul>
+      </div>
     </main>
     <script type="module" src="/src/cards/main.js"></script>
   </body>
