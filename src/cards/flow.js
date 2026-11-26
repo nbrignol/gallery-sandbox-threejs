@@ -10,6 +10,7 @@ import {
   CAMERA_FOV,
   CARD_SIZE,
   DROP_DURATION,
+  EXPAND_START,
   FLOAT_ARC,
   FLOAT_BOB,
   FLOAT_BOB_TILT_DEG,
@@ -36,11 +37,15 @@ const FACE_TO_CAMERA = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3
 //   p monte → pioche ; p redescend → la même animation à l'envers.
 // La pose (position, rotation, échelle) interpole la pose de repos vers la pose flottante, calée sur
 // la caméra. La courbure précède la montée (voir applyPose) ; elle est nulle aux deux bouts.
-export function createFlow({ canvas, camera, hover, panel }) {
+// `viewInfo` : fenêtre de rendu du canvas dans le cadre de référence de la caméra (celui de la scène dans la page) :
+// { x, y, w, h, fullW, fullH } en pixels. Au repos x = y = 0 et w, h = fullW, fullH ; en plein écran, la fenêtre
+// déborde du cadre de référence, ce qui garde la table exactement à sa place.
+export function createFlow({ canvas, camera, hover, panel, viewInfo }) {
   const raycaster = new THREE.Raycaster();
   // Cartes en cours de pioche / flottantes / en retour : { card, p, target, offset, shown }.
   // Pendant une navigation, deux cartes coexistent (celle qui repart, celle qui arrive).
   const entries = [];
+  let hold = false; // navigation en cours : le plein écran reste ouvert entre deux cartes
   let pending = null; // { card, timer } : carte suivante, démarrée un peu après le début du retour de la précédente
 
   const floatPose = { position: new THREE.Vector3(), quaternion: new THREE.Quaternion(), scale: 1 };
@@ -58,15 +63,21 @@ export function createFlow({ canvas, camera, hover, panel }) {
 
   // Pose flottante : à FLOAT_DISTANCE devant la caméra, décalée à gauche, face à l'écran
   function computeFloatPose(time) {
-    const halfHeight = FLOAT_DISTANCE * Math.tan(THREE.MathUtils.degToRad(CAMERA_FOV / 2));
-    const halfWidth = halfHeight * camera.aspect;
-    const screenX = camera.aspect > 1 ? FLOAT_SCREEN_X : 0; // en portrait : centrée
+    // Taille d'un pixel de référence en mètres à FLOAT_DISTANCE ; la fenêtre de rendu peut être plus grande que le cadre
+    const worldPerPixel = (FLOAT_DISTANCE * Math.tan(THREE.MathUtils.degToRad(CAMERA_FOV / 2))) / (viewInfo.fullH / 2);
+    const halfHeight = (worldPerPixel * viewInfo.h) / 2;
+    const halfWidth = (worldPerPixel * viewInfo.w) / 2;
+    const centerRight = worldPerPixel * (viewInfo.x + viewInfo.w / 2 - viewInfo.fullW / 2); // centre de la fenêtre / axe caméra
+    const centerUp = -worldPerPixel * (viewInfo.y + viewInfo.h / 2 - viewInfo.fullH / 2);
+    const screenX = viewInfo.w > viewInfo.h ? FLOAT_SCREEN_X : 0; // en portrait : centrée
     tmp.forward.set(0, 0, -1).applyQuaternion(camera.quaternion);
     tmp.right.set(1, 0, 0).applyQuaternion(camera.quaternion);
+    tmp.up.set(0, 1, 0).applyQuaternion(camera.quaternion);
     floatPose.position
       .copy(camera.position)
       .addScaledVector(tmp.forward, FLOAT_DISTANCE)
-      .addScaledVector(tmp.right, screenX * halfWidth);
+      .addScaledVector(tmp.right, centerRight + screenX * halfWidth)
+      .addScaledVector(tmp.up, centerUp);
     floatPose.scale = Math.min(
       (FLOAT_HEIGHT_FRACTION * 2 * halfHeight) / CARD_SIZE,
       (0.8 * 2 * halfWidth) / CARD_SIZE,
@@ -110,6 +121,9 @@ export function createFlow({ canvas, camera, hover, panel }) {
     const bend = p < BEND_PEAK
       ? 1 - (1 - p / BEND_PEAK) ** 2 // montée rapide, qui ralentit en haut
       : 1 - easeInOutCubic((p - BEND_PEAK) / (1 - BEND_PEAK));
+    // Premier plan : dès qu'elle quitte la table, la carte est dessinée dans une 2e passe (couche 1, profondeur
+    // remise à zéro) : rien ne peut passer devant elle, mais elle garde sa propre profondeur (courbure).
+    card.layers.set(p >= riseStart ? 1 : 0);
     computeFloatPose(time);
 
     // Phase 1 (p < MOVE_DELAY) : la carte glisse au sol vers la caméra pendant qu'elle se courbe.
@@ -162,11 +176,13 @@ export function createFlow({ canvas, camera, hover, panel }) {
     const { card } = entry;
     card.position.copy(restPosition(card));
     card.quaternion.copy(card.userData.rest.quaternion);
+    card.layers.set(0);
     card.scale.setScalar(1);
     bendCard(card, 0);
     setUnlit(card, 0);
     hover.release(card);
     entries.splice(entries.indexOf(entry), 1);
+    if (entries.length === 0) hold = false;
   }
 
   // La carte flottante : arrivée, sans aucune autre animation en cours
@@ -184,6 +200,7 @@ export function createFlow({ canvas, camera, hover, panel }) {
       ),
       camera,
     );
+    raycaster.layers.enableAll(); // la carte flottante est sur la couche 1
     return raycaster.intersectObject(floating().card, false).length > 0;
   }
 
@@ -193,6 +210,7 @@ export function createFlow({ canvas, camera, hover, panel }) {
       const card = hover.cardAt(event.clientX, event.clientY);
       if (card) start(card, lastTime);
     } else if (isFloating() && floatingCardAt(event.clientX, event.clientY)) {
+      hold = false;
       drop(floating());
     }
   });
@@ -206,6 +224,7 @@ export function createFlow({ canvas, camera, hover, panel }) {
     if (!current) return;
     const total = hover.count;
     const next = hover.cards[(current.card.userData.index + step + total) % total];
+    hold = true;
     drop(current, NAV_SPEED);
     panel.setBusy(true);
     pending = { card: next, timer: (DROP_DURATION * NAV_OVERLAP) / NAV_SPEED };
@@ -215,6 +234,8 @@ export function createFlow({ canvas, camera, hover, panel }) {
     // Une carte est en cours de pioche, flottante ou en retour : le survol est suspendu
     isActive: () => entries.length > 0 || pending !== null,
     isFloating,
+    // Une carte est au premier plan : elle demande une 2e passe de rendu
+    hasForeground: () => entries.some((entry) => entry.card.layers.isEnabled(1)),
     start,
     goTo,
     // Test : fixe la progression de la carte active (?carte=2&p=0.5)
@@ -223,7 +244,18 @@ export function createFlow({ canvas, camera, hover, panel }) {
     },
     drop() {
       const current = floating();
-      if (current) drop(current);
+      if (current) {
+        hold = false;
+        drop(current);
+      }
+    },
+    // Plein écran (0 ou 1, sans transition) : le canvas passe en plein écran dès qu'une carte est piochée et ne
+    // revient dans la page qu'une fois toutes les cartes reposées. La table ne bouge pas (cadrage de la caméra
+    // inchangé) : seule la carte voyage, de sa place sur la table jusqu'à la pose flottante.
+    // Ancienne version (agrandissement progressif, piloté par la pioche) :
+    //   let k = 0; for (const entry of entries) k = Math.max(k, smoothstep(EXPAND_START, 1, entry.p)); return k;
+    expansion() {
+      return entries.length > 0 || pending ? 1 : 0;
     },
     update(dt, time) {
       lastTime = time;

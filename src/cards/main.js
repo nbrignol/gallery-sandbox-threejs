@@ -9,6 +9,9 @@ import {
   CARDS,
   CARD_BACK_TEXTURE,
   CARD_SIZE,
+  EXPAND_BORDER_RADIUS,
+  EXPAND_DIM_TABLE,
+  EXPAND_VEIL_OPACITY,
   FLOOR_TRANSPARENT,
   HEMI_GROUND_COLOR,
   HEMI_INTENSITY,
@@ -41,11 +44,15 @@ import './cards.css';
 
 const canvas = document.getElementById('scene');
 const stage = document.getElementById('stage');
+const view = document.getElementById('view');
+const backdrop = document.getElementById('backdrop');
 const loading = document.getElementById('loading');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: FLOOR_TRANSPARENT });
+renderer.autoClear = false; // l'effacement est fait à la main : 2 passes quand une carte est au premier plan
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.shadowMap.enabled = true;
+renderer.shadowMap.autoUpdate = false; // mise à jour demandée une fois par frame (2 passes de rendu)
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = TONE_EXPOSURE;
@@ -68,6 +75,9 @@ spot.shadow.intensity = SHADOW_INTENSITY;
 spot.shadow.camera.near = 2;
 spot.shadow.camera.far = 14;
 scene.add(spot, spot.target);
+// Les lumières servent aussi à la passe « premier plan » (couche 1)
+spot.layers.enable(1);
+hemi.layers.enable(1);
 
 const floor = createFloor();
 floor.receiveShadow = true;
@@ -100,25 +110,84 @@ function placeCamera() {
   camera.lookAt(0, 0, 0);
 }
 
+// Taille du canvas : celle de la scène dans la page, ou (en plein écran) celle de la fenêtre.
+// La distance de la caméra ne dépend que de la scène dans la page : elle ne bouge pas quand le canvas grandit.
+// La caméra garde toujours le cadrage de la scène dans la page (aspect et distance) ; en plein écran, le canvas
+// n'est qu'une fenêtre plus grande sur ce même cadrage (setViewOffset) : la table reste exactement à sa place.
+// (x, y) = coin haut gauche du canvas par rapport au cadre de la scène dans la page.
+const viewInfo = { x: 0, y: 0, w: 1, h: 1, fullW: 1, fullH: 1 };
+function resizeView(width, height, x = 0, y = 0) {
+  const fullW = stage.clientWidth;
+  const fullH = stage.clientHeight;
+  camera.aspect = fullW / fullH;
+  if (x !== 0 || y !== 0 || width !== fullW || height !== fullH) camera.setViewOffset(fullW, fullH, x, y, width, height);
+  else camera.clearViewOffset();
+  Object.assign(viewInfo, { x, y, w: width, h: height, fullW, fullH });
+  placeCamera();
+  camera.updateProjectionMatrix();
+  renderer.setSize(width, height, false); // le CSS (100 % du conteneur) fixe la taille d'affichage
+}
+
 function fitCamera() {
   const width = stage.clientWidth;
   const height = stage.clientHeight;
   if (!width || !height) return;
-  const aspect = width / height;
   const xs = CARDS.map((c) => c.offsetX);
   const cardsWidth = Math.max(...xs) - Math.min(...xs) + CARD_SIZE * 1.2;
   const cardsHeight = CARD_SIZE * 1.5;
   const tan = Math.tan(THREE.MathUtils.degToRad(CAMERA_FOV / 2));
   const forHeight = cardsHeight / CAMERA_FILL / 2 / tan;
-  const forWidth = cardsWidth / CAMERA_FILL / 2 / tan / aspect;
-  camera.aspect = aspect;
+  const forWidth = cardsWidth / CAMERA_FILL / 2 / tan / (width / height);
   cameraDistance = Math.max(forHeight, forWidth);
-  placeCamera();
-  camera.updateProjectionMatrix();
-  renderer.setSize(width, height, false); // le CSS (100 % du conteneur) fixe la taille d'affichage
+  if (expanded) lastExpansionKey = ''; // le prochain rendu recalcule le plein écran
+  else resizeView(width, height);
 }
+let lastExpansionKey = '';
+let expanded = false; // le canvas a quitté la page (plein écran en cours ou terminé)
 new ResizeObserver(fitCamera).observe(stage);
 fitCamera();
+
+// Plein écran : k = 0 → le canvas occupe la scène dans la page ; k = 1 → toute la fenêtre.
+// Le bloc de la scène garde sa taille (la mise en page ne bouge pas). Options (config) : voile sombre derrière
+// le canvas (EXPAND_VEIL_OPACITY) et extinction de la lumière de la table (EXPAND_DIM_TABLE).
+function applyExpansion(k) {
+  if (k <= 0.0005) {
+    if (!expanded) return;
+    expanded = false;
+    lastExpansionKey = '';
+    view.classList.remove('is-expanded');
+    view.style.cssText = '';
+    backdrop.style.opacity = '0';
+    document.documentElement.style.overflow = '';
+    spot.intensity = SPOT_INTENSITY;
+    hemi.intensity = HEMI_INTENSITY;
+    resizeView(stage.clientWidth, stage.clientHeight);
+    return;
+  }
+  const from = stage.getBoundingClientRect();
+  const toWidth = document.documentElement.clientWidth;
+  const toHeight = window.innerHeight;
+  const lerp = THREE.MathUtils.lerp;
+  const left = lerp(from.left, 0, k);
+  const top = lerp(from.top, 0, k);
+  const width = lerp(from.width, toWidth, k);
+  const height = lerp(from.height, toHeight, k);
+  if (!expanded) {
+    expanded = true;
+    view.classList.add('is-expanded');
+    document.documentElement.style.overflow = 'hidden'; // pas de défilement derrière (scrollbar-gutter évite le saut de mise en page)
+  }
+  const key = [left, top, width, height, k].map((v) => v.toFixed(2)).join();
+  if (key === lastExpansionKey) return;
+  lastExpansionKey = key;
+  view.style.cssText = `left:${left}px;top:${top}px;width:${width}px;height:${height}px;border-radius:${EXPAND_BORDER_RADIUS * (1 - k)}px`;
+  backdrop.style.opacity = String(k * EXPAND_VEIL_OPACITY);
+  if (EXPAND_DIM_TABLE) {
+    spot.intensity = SPOT_INTENSITY * (1 - k);
+    hemi.intensity = HEMI_INTENSITY * (1 - k);
+  }
+  resizeView(width, height, left - from.left, top - from.top);
+}
 
 // Animation de démarrage : p = 0 (vue du dessus, tout noir) → 1 (scène finale)
 const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
@@ -161,12 +230,12 @@ new IntersectionObserver(
 let flow = null;
 const hover = createHover({ canvas, camera, cards, enabled: () => intro.state === 'done' && !flow?.isActive() });
 const panel = createCardPanel({
-  parent: stage,
+  parent: view,
   onClose: () => flow.drop(),
   onPrev: () => flow.goTo(-1),
   onNext: () => flow.goTo(1),
 });
-flow = createFlow({ canvas, camera, hover, panel });
+flow = createFlow({ canvas, camera, hover, panel, viewInfo });
 const contactAO = createContactAO({ scene, cards });
 const tooltip = createTooltip({ scene, camera, anchorOf: hover.anchorOf });
 
@@ -215,7 +284,7 @@ if (hoverParam >= 1 && hoverParam <= cards.length) {
 const clock = new THREE.Clock();
 renderer.setAnimationLoop(() => {
   const dt = Math.min(clock.getDelta(), 0.1);
-  if (!onScreen) return;
+  if (!onScreen && !expanded) return;
   if (intro.state === 'playing') {
     intro.t += dt;
     const p = THREE.MathUtils.clamp((intro.t - INTRO_DELAY) / INTRO_DURATION, 0, 1);
@@ -227,7 +296,19 @@ renderer.setAnimationLoop(() => {
   }
   hover.update(dt, clock.elapsedTime);
   flow.update(dt, clock.elapsedTime);
+  applyExpansion(flow.expansion());
   contactAO.update();
   tooltip.update(dt, flow.isActive() ? null : hover.hovered);
+  // Rendu : la table (couche 0), puis, profondeur remise à zéro, la carte au premier plan (couche 1)
+  const foreground = flow.hasForeground();
+  if (SHADOW_ENABLED) renderer.shadowMap.needsUpdate = true;
+  renderer.clear();
+  camera.layers.set(0);
   renderer.render(scene, camera);
+  if (foreground) {
+    renderer.clearDepth();
+    camera.layers.set(1);
+    renderer.render(scene, camera);
+  }
+  camera.layers.enableAll(); // les raycasts (survol, clic) voient toutes les couches
 });

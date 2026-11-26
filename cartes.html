@@ -6,6 +6,7 @@
     <title>Cartes</title>
     <style>
       html {
+        scrollbar-gutter: stable; /* pas de saut de mise en page quand on bloque le défilement en plein écran */
         background: #24272e;
       }
       body {
@@ -42,6 +43,27 @@
         overflow: hidden;
         border-radius: 6px;
         outline: none;
+      }
+      /* Zone de dessin : remplit le bloc, ou passe en plein écran (position et taille pilotées par le script) */
+      .cards-view {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        border-radius: 6px;
+      }
+      .cards-view.is-expanded {
+        position: fixed;
+        inset: auto;
+        z-index: 20;
+      }
+      /* Voile sombre derrière le canvas en plein écran */
+      .cards-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 19;
+        background: #000; /* noir pur : les autres cartes, éteintes, disparaissent dedans */
+        opacity: 0;
+        pointer-events: none;
       }
       .cards-stage canvas {
         display: block;
@@ -99,7 +121,10 @@
       </p>
 
       <div class="cards-stage" id="stage" tabindex="0">
-        <canvas id="scene"></canvas>
+        <div class="cards-backdrop" id="backdrop"></div>
+        <div class="cards-view" id="view">
+          <canvas id="scene"></canvas>
+        </div>
         <div class="cards-loading" id="loading">...</div>
       </div>
 

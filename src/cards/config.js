@@ -114,3 +114,9 @@ export const INTRO_ENABLED = false; // false : la scène apparaît directement d
 export const INTRO_DELAY = 0.5; // pause après la disparition du texte (s)
 export const INTRO_DURATION = 2.8; // durée : caméra qui s'abaisse + lumière qui s'élargit (s)
 export const INTRO_SPOT_START_DEG = 1.5; // demi-angle initial du spot (°)
+
+// Plein écran de la carte flottante : le canvas s'agrandit jusqu'à la fenêtre, piloté par la progression de la pioche
+export const EXPAND_START = 0.3; // progression de la pioche à partir de laquelle le canvas commence à s'agrandir
+export const EXPAND_BORDER_RADIUS = 6; // arrondi du canvas dans la page (px), qui s'annule en plein écran
+export const EXPAND_VEIL_OPACITY = 0; // opacité maximale du voile noir derrière le canvas en plein écran (0 = transparent, la page reste visible)
+export const EXPAND_DIM_TABLE = false; // true : la lumière de la table s'éteint pendant le plein écran (les autres cartes s'assombrissent)
