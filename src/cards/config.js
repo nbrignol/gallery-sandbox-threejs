@@ -85,11 +85,13 @@ export const FLOAT_FLOOR_MARGIN = 0.05; // garde minimale entre le bas de la car
 // Tooltip 3D au survol / à la sélection (tout en mètres : plus la carte est loin, plus il est petit)
 export const TOOLTIP_COLOR = '#ffffff';
 export const TOOLTIP_BULLET_RADIUS = 0.03; // rayon de la puce (m)
-export const TOOLTIP_LINE_HEIGHT = 0.22; // hauteur de la ligne (m)
+export const TOOLTIP_LINE_HEIGHT = 0.34; // hauteur de la ligne (m)
 export const TOOLTIP_LINE_WIDTH = 0.006; // épaisseur de la ligne (m)
 export const TOOLTIP_FRAME_HEIGHT = 0.15; // hauteur du cadre (m) ; la largeur suit le texte
 export const TOOLTIP_FRAME_BORDER = 6; // épaisseur du cadre (px de la texture)
-export const TOOLTIP_FRAME_RADIUS = 14; // arrondi des coins (px de la texture)
+export const TOOLTIP_FRAME_RADIUS = 0; // arrondi des coins (px de la texture)
 export const TOOLTIP_FRAME_FILL = 'rgba(0, 0, 0, 0.35)'; // fond du cadre (lisibilité)
-export const TOOLTIP_FONT = '600 52px system-ui, -apple-system, "Segoe UI", sans-serif';
+export const TOOLTIP_FONT = '600 42px system-ui, -apple-system, "Segoe UI", sans-serif';
 export const TOOLTIP_FADE = 14; // vitesse du fondu (plus grand = plus rapide)
+export const TOOLTIP_OUTLINE_MARGIN = 0.03; // le rectangle déborde de la carte de ce montant, de chaque côté (m)
+export const TOOLTIP_OUTLINE_WIDTH = 0.01; // épaisseur du trait du rectangle (m)

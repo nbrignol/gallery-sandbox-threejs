@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {
+  CARD_SIZE,
   CARD_THICKNESS,
   TOOLTIP_BULLET_RADIUS,
   TOOLTIP_COLOR,
@@ -11,6 +12,8 @@ import {
   TOOLTIP_FRAME_RADIUS,
   TOOLTIP_LINE_HEIGHT,
   TOOLTIP_LINE_WIDTH,
+  TOOLTIP_OUTLINE_MARGIN,
+  TOOLTIP_OUTLINE_WIDTH,
 } from './config.js';
 
 const smoothstep = (a, b, x) => {
@@ -18,6 +21,7 @@ const smoothstep = (a, b, x) => {
   return t * t * (3 - 2 * t);
 };
 const TEXTURE_HEIGHT = 128;
+const screenUp = new THREE.Vector3();
 
 // Cadre blanc arrondi + titre, dessinés dans un canvas ; largeur adaptée au texte
 function createTitleTexture(title) {
@@ -69,6 +73,22 @@ export function createTooltip({ scene, camera, anchorOf }) {
     new THREE.CircleGeometry(TOOLTIP_BULLET_RADIUS, 32).rotateX(-Math.PI / 2),
     material({ polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }),
   );
+  // Rectangle englobant la carte : cadre plat (carré creux), orienté comme la carte au repos
+  const outer = CARD_SIZE / 2 + TOOLTIP_OUTLINE_MARGIN;
+  const inner = outer - TOOLTIP_OUTLINE_WIDTH;
+  const outlineShape = new THREE.Shape()
+    .moveTo(-outer, -outer)
+    .lineTo(outer, -outer)
+    .lineTo(outer, outer)
+    .lineTo(-outer, outer)
+    .closePath();
+  outlineShape.holes.push(
+    new THREE.Path().moveTo(-inner, -inner).lineTo(-inner, inner).lineTo(inner, inner).lineTo(inner, -inner).closePath(),
+  );
+  const outline = new THREE.Mesh(
+    new THREE.ShapeGeometry(outlineShape).rotateX(-Math.PI / 2),
+    material({ polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }),
+  );
   // Ligne : plan vertical de hauteur 1, origine en bas (échelle Y = hauteur), tourné vers la caméra
   const line = new THREE.Mesh(
     new THREE.PlaneGeometry(TOOLTIP_LINE_WIDTH, 1).translate(0, 0.5, 0),
@@ -79,8 +99,8 @@ export function createTooltip({ scene, camera, anchorOf }) {
     new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0),
     material({ depthTest: false, map: null }),
   );
-  for (const mesh of [bullet, line, frame]) mesh.renderOrder = 10;
-  group.add(bullet, line, frame);
+  for (const mesh of [bullet, outline, line, frame]) mesh.renderOrder = 10;
+  group.add(bullet, outline, line, frame);
   scene.add(group);
 
   const titles = new Map(); // carte -> { texture, aspect }
@@ -116,13 +136,20 @@ export function createTooltip({ scene, camera, anchorOf }) {
       group.position.copy(anchor);
       group.position.y += CARD_THICKNESS * 0.5 + 0.004;
 
-      const yaw = Math.atan2(camera.position.x - anchor.x, camera.position.z - anchor.z);
+      // Ancien : trait vertical dans le monde (axe Y), tourné vers la caméra
+      // const yaw = Math.atan2(camera.position.x - anchor.x, camera.position.z - anchor.z);
+      // Actuel : trait vertical à l'écran (le long du haut de la caméra)
+      screenUp.set(0, 1, 0).applyQuaternion(camera.quaternion);
       const grow = smoothstep(0, 0.7, visibility);
-      line.rotation.y = yaw;
+      // line.rotation.y = yaw;
+      line.quaternion.copy(camera.quaternion);
       line.scale.y = TOOLTIP_LINE_HEIGHT * grow;
       frame.quaternion.copy(camera.quaternion);
-      frame.position.set(0, TOOLTIP_LINE_HEIGHT * grow, 0);
+      // frame.position.set(0, TOOLTIP_LINE_HEIGHT * grow, 0);
+      frame.position.copy(screenUp).multiplyScalar(TOOLTIP_LINE_HEIGHT * grow);
       bullet.material.opacity = Math.min(1, visibility * 3);
+      outline.material.opacity = Math.min(1, visibility * 3);
+      outline.quaternion.copy(shown.userData.rest.quaternion);
       line.material.opacity = grow;
       frame.material.opacity = smoothstep(0.5, 1, visibility);
     },
