@@ -25,6 +25,9 @@ export const FLOOR_FOLDER = 'diagonal_parquet';
 export const FLOOR_TEXTURE_SIZE = 2.36; // taille réelle d'un motif (m)
 export const FLOOR_EXTENT = 16; // côté du plan de sol (m)
 export const FLOOR_SEGMENTS = 8;
+// Test : sol invisible qui ne montre que les ombres portées (canvas transparent, la page apparaît derrière)
+export const FLOOR_TRANSPARENT = true;
+export const FLOOR_SHADOW_OPACITY = 0.6; // force des ombres au sol quand le sol est transparent
 
 // Caméra (vue du dessus)
 export const CAMERA_FOV = 40;
@@ -41,7 +44,7 @@ export const BACKGROUND_COLOR = 0x111111;
 export const SPOT_POSITION = [0, 6, 1.5]; // x, y, z (m) ; il vise le centre de la table
 export const SPOT_COLOR = 0xfff1dc;
 export const SPOT_INTENSITY = 260; // candelas (décroissance physique)
-export const SPOT_ANGLE_DEG = 26; // demi-angle du cône
+export const SPOT_ANGLE_DEG = 34; // demi-angle du cône
 export const SPOT_PENUMBRA = 0.85; // 1 = bord totalement doux
 export const SPOT_DECAY = 2;
 
@@ -56,6 +59,7 @@ export const HOVER_NEIGHBOR_PUSH = 0.18; // écartement (m) des cartes voisines 
 
 // Ombres du spot (cartes sur le sol et entre elles)
 export const SHADOW_MAP_SIZE = 2048;
+export const SHADOW_ENABLED = false; // false : plus d'ombre portée du spot (il reste l'AO de contact)
 export const SHADOW_BIAS = -0.0004;
 export const SHADOW_NORMAL_BIAS = 0.01;
 export const SHADOW_RADIUS = 4; // douceur du bord
@@ -70,7 +74,7 @@ export const MOVE_DELAY = 0.1; // progression à partir de laquelle la carte qui
 export const MOVE_OVERLAP = 0.0; // la montée démarre MOVE_OVERLAP avant la fin du glissement : pas de temps mort entre les deux phases
 export const SLIDE_DISTANCE = 0.7; // glissement au sol vers la caméra (+Z) pendant la courbure (m)
 export const FLOAT_DISTANCE = 3; // distance de la carte flottante à la caméra (m)
-export const FLOAT_HEIGHT_FRACTION = 0.62; // part de la hauteur de l'écran occupée par la carte flottante
+export const FLOAT_HEIGHT_FRACTION = 0.82; // part de la hauteur de l'écran occupée par la carte flottante
 export const FLOAT_SCREEN_X = -0.36; // position horizontale à l'écran (-1 = bord gauche, 1 = bord droit) ; le panneau est à droite
 export const FLOAT_ARC = 0.5; // la trajectoire passe par un point plus haut (m)
 export const FLOAT_BOB = 0.02; // amplitude du léger flottement (m)
@@ -98,7 +102,7 @@ export const TOOLTIP_OUTLINE_WIDTH = 0.01; // épaisseur du trait du rectangle (
 
 // AO de contact : une ombre douce sous chaque carte, qui s'étale et s'estompe quand la carte monte
 export const AO_STRENGTH = 0.4; // opacité maximale (carte posée)
-export const AO_MARGIN = 0.07; // largeur du dégradé au-delà du bord de la carte (m)
+export const AO_MARGIN = 0.045; // largeur du dégradé au-delà du bord de la carte (m)
 export const AO_CURVE = 2; // dureté du dégradé (1 = linéaire, plus grand = plus serré contre la carte)
 export const AO_FADE_HEIGHT = 0.3; // hauteur de montée (m) à laquelle l'AO a disparu
 export const AO_SPREAD = 2; // élargissement par mètre de montée
@@ -106,6 +110,7 @@ export const AO_OFFSET_Z = 0.015; // décalage de l'AO vers l'avant (+Z, côté 
 export const AO_SQUASH_Z = 0.3; // écrase l'ombre en profondeur : 1 = carré, 0.5 = marge deux fois plus courte devant/derrière que sur les côtés
 
 // Animation de démarrage (jouée quand la scène apparaît à l'écran)
+export const INTRO_ENABLED = false; // false : la scène apparaît directement dans son état final
 export const INTRO_DELAY = 0.5; // pause après la disparition du texte (s)
 export const INTRO_DURATION = 2.8; // durée : caméra qui s'abaisse + lumière qui s'élargit (s)
 export const INTRO_SPOT_START_DEG = 1.5; // demi-angle initial du spot (°)

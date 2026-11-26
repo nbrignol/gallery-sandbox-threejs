@@ -9,10 +9,12 @@ import {
   CARDS,
   CARD_BACK_TEXTURE,
   CARD_SIZE,
+  FLOOR_TRANSPARENT,
   HEMI_GROUND_COLOR,
   HEMI_INTENSITY,
   HEMI_SKY_COLOR,
   INTRO_DELAY,
+  INTRO_ENABLED,
   INTRO_DURATION,
   INTRO_SPOT_START_DEG,
   SPOT_ANGLE_DEG,
@@ -21,6 +23,7 @@ import {
   SPOT_INTENSITY,
   SPOT_PENUMBRA,
   SHADOW_BIAS,
+  SHADOW_ENABLED,
   SHADOW_INTENSITY,
   SHADOW_MAP_SIZE,
   SHADOW_NORMAL_BIAS,
@@ -39,7 +42,7 @@ import './cards.css';
 const canvas = document.getElementById('scene');
 const stage = document.getElementById('stage');
 const loading = document.getElementById('loading');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: FLOOR_TRANSPARENT });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.shadowMap.enabled = true;
@@ -48,7 +51,7 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = TONE_EXPOSURE;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(BACKGROUND_COLOR);
+if (!FLOOR_TRANSPARENT) scene.background = new THREE.Color(BACKGROUND_COLOR);
 const hemi = new THREE.HemisphereLight(HEMI_SKY_COLOR, HEMI_GROUND_COLOR, HEMI_INTENSITY);
 scene.add(hemi);
 
@@ -56,7 +59,7 @@ scene.add(hemi);
 const spot = new THREE.SpotLight(SPOT_COLOR, SPOT_INTENSITY, 0, THREE.MathUtils.degToRad(SPOT_ANGLE_DEG), SPOT_PENUMBRA, SPOT_DECAY);
 spot.position.set(...SPOT_POSITION);
 spot.target.position.set(0, 0, 0);
-spot.castShadow = true;
+spot.castShadow = SHADOW_ENABLED;
 spot.shadow.mapSize.set(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);
 spot.shadow.bias = SHADOW_BIAS;
 spot.shadow.normalBias = SHADOW_NORMAL_BIAS;
@@ -132,7 +135,7 @@ function applyIntro(p) {
 const intro = { state: 'waiting', t: 0 }; // waiting → playing → done
 const introParam = new URLSearchParams(location.search).get('intro'); // test : ?intro=skip ou ?intro=0.5 (figé)
 const params = new URLSearchParams(location.search);
-if (introParam !== null || params.has('carte') || params.has('survol')) {
+if (!INTRO_ENABLED || introParam !== null || params.has('carte') || params.has('survol')) {
   intro.state = 'done';
   loading.classList.add('is-hidden');
   applyIntro(introParam !== null && introParam !== 'skip' ? Number(introParam) : 1);

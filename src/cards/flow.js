@@ -16,6 +16,7 @@ import {
   FLOAT_DISTANCE,
   FLOAT_EMISSIVE,
   FLOAT_FLOOR_MARGIN,
+  FLOOR_TRANSPARENT,
   FLOAT_HEIGHT_FRACTION,
   FLOAT_SCREEN_X,
   LIFT_DURATION,
@@ -73,7 +74,8 @@ export function createFlow({ canvas, camera, hover, panel }) {
     // Le bas de la carte ne doit pas passer sous le sol (cadrage large : caméra plus basse)
     tmp.up.set(0, 1, 0).applyQuaternion(camera.quaternion);
     const bottom = floatPose.position.y - (CARD_SIZE * floatPose.scale * 0.5 + FLOAT_BOB) * Math.abs(tmp.up.y);
-    if (bottom < FLOAT_FLOOR_MARGIN) floatPose.position.y += FLOAT_FLOOR_MARGIN - bottom;
+    // (inutile quand le sol est transparent : rien à traverser, et le relèvement sortirait la carte du cadre)
+    if (!FLOOR_TRANSPARENT && bottom < FLOAT_FLOOR_MARGIN) floatPose.position.y += FLOAT_FLOOR_MARGIN - bottom;
     floatPose.quaternion.copy(camera.quaternion).multiply(FACE_TO_CAMERA);
     // léger flottement
     const bob = Math.sin(time * 1.6) * FLOAT_BOB;

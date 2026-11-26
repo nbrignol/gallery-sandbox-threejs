@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import {
   FLOOR_EXTENT,
   FLOOR_FOLDER,
+  FLOOR_SHADOW_OPACITY,
+  FLOOR_TRANSPARENT,
   FLOOR_SEGMENTS,
   FLOOR_TEXTURE_SIZE,
 } from './config.js';
@@ -25,11 +27,14 @@ export function createFloor() {
   for (let i = 0; i < uv.count; i++) {
     uv.setXY(i, pos.getX(i) / FLOOR_TEXTURE_SIZE, pos.getY(i) / FLOOR_TEXTURE_SIZE);
   }
-  const material = new THREE.MeshStandardMaterial({
-    map: loadMap('color.jpg', true),
-    normalMap: loadMap('normal.jpg'),
-    roughness: 0.9,
-  });
+  // Sol transparent : seules les ombres reçues sont visibles
+  const material = FLOOR_TRANSPARENT
+    ? new THREE.ShadowMaterial({ color: 0x000000, opacity: FLOOR_SHADOW_OPACITY })
+    : new THREE.MeshStandardMaterial({
+        map: loadMap('color.jpg', true),
+        normalMap: loadMap('normal.jpg'),
+        roughness: 0.9,
+      });
   const floor = new THREE.Mesh(geometry, material);
   floor.rotation.x = -Math.PI / 2;
   return floor;
