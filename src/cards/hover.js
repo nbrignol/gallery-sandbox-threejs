@@ -100,6 +100,15 @@ export function createHover({ canvas, camera, cards, enabled = () => true }) {
     },
     // Décalage X (m) dû à l'écartement des voisines : la pioche en tient compte pour son point de départ/d'arrivée
     pushOffset: (card) => states[cards.indexOf(card)].push * HOVER_NEIGHBOR_PUSH,
+    // Centre de la face du dessus : position de repos + écartement + montée (sans la vibration)
+    anchorOf(card, out) {
+      const state = states[cards.indexOf(card)];
+      return out.set(
+        state.rest.position.x + state.push * HOVER_NEIGHBOR_PUSH,
+        state.rest.position.y + HOVER_LIFT * state.amount,
+        state.rest.position.z,
+      );
+    },
     count: cards.length,
     cards,
     control(card) {

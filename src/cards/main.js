@@ -28,6 +28,7 @@ import { createFloor } from './floor.js';
 import { createCard, loadBackTexture } from './card.js';
 import { createHover } from './hover.js';
 import { createFlow } from './flow.js';
+import { createTooltip } from './tooltip.js';
 import { createCardPanel } from './panel.js';
 import './cards.css';
 
@@ -108,6 +109,7 @@ const panel = createCardPanel({
   onNext: () => flow.goTo(1),
 });
 flow = createFlow({ canvas, camera, hover, panel });
+const tooltip = createTooltip({ scene, camera, anchorOf: hover.anchorOf });
 
 // Clavier : sur la table, ← → sélectionnent une carte (comme le survol) et Entrée la pioche ;
 // carte flottante : ← → affichent la précédente / suivante, Échap la repose.
@@ -141,10 +143,21 @@ if (openParam >= 1 && openParam <= cards.length) {
   if (seek !== null) flow.seek(Number(seek));
 }
 
+// Test : ?survol=2 sélectionne la 2e carte (comme au clavier)
+const hoverParam = Number(new URLSearchParams(location.search).get('survol'));
+if (hoverParam >= 1 && hoverParam <= cards.length) {
+  hover.select(cards[hoverParam - 1]);
+  for (let i = 0; i < 60; i++) {
+    hover.update(0.05, i * 0.05); // avance l'état lissé (capture de test)
+    tooltip.update(0.05, hover.hovered);
+  }
+}
+
 const clock = new THREE.Clock();
 renderer.setAnimationLoop(() => {
   const dt = Math.min(clock.getDelta(), 0.1);
   hover.update(dt, clock.elapsedTime);
   flow.update(dt, clock.elapsedTime);
+  tooltip.update(dt, flow.isActive() ? null : hover.hovered);
   renderer.render(scene, camera);
 });
