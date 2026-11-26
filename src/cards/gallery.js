@@ -21,6 +21,8 @@ import {
   INTRO_DURATION,
   INTRO_SPOT_START_DEG,
   NAV_SPEED,
+  SCROLL_TILT_DEG,
+  SCROLL_TILT_SMOOTH,
   SPOT_ANGLE_DEG,
   SPOT_COLOR,
   SPOT_DECAY,
@@ -426,6 +428,17 @@ export function createCardGallery(container, { testParams = false, navigate = nu
       if (p >= 1) {
         intro.state = 'done';
         canvas.style.pointerEvents = '';
+      }
+    }
+    // Inclinaison liée au défilement de la page : -SCROLL_TILT_DEG en haut de page, +SCROLL_TILT_DEG en bas
+    if (intro.state === 'done') {
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = maxScroll > 0 ? THREE.MathUtils.clamp(window.scrollY / maxScroll, 0, 1) : 0.5;
+      const targetTilt = CAMERA_TILT_DEG + (progress * 2 - 1) * SCROLL_TILT_DEG;
+      const next = tiltDeg + (targetTilt - tiltDeg) * (1 - Math.exp(-SCROLL_TILT_SMOOTH * dt));
+      if (Math.abs(next - tiltDeg) > 0.0005) {
+        tiltDeg = next;
+        placeCamera();
       }
     }
     hover.update(dt, clock.elapsedTime);

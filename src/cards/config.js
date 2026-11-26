@@ -34,7 +34,9 @@ export const FLOOR_SHADOW_OPACITY = 0.6; // force des ombres au sol quand le sol
 
 // Caméra (vue du dessus)
 export const CAMERA_FOV = 40;
-export const CAMERA_TILT_DEG = 55; // inclinaison depuis la verticale, sur l'axe X uniquement (0 = vue du dessus stricte) : la caméra recule vers le sud
+export const CAMERA_TILT_DEG = 50; // vue inclinée d'origine
+export const SCROLL_TILT_DEG = 10; // l'inclinaison varie de -5° (haut de la page) à +5° (bas de la page) autour de CAMERA_TILT_DEG, selon le défilement
+export const SCROLL_TILT_SMOOTH = 8; // lissage de ce mouvement (1/s) ; plus grand = plus réactif
 export const CAMERA_FILL = 0.8; // part de l'écran occupée par la rangée de cartes
 
 // Lumière d'ambiance
