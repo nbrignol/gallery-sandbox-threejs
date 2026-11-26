@@ -4,9 +4,120 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Cartes</title>
+    <style>
+      html {
+        background: #0d0d0d;
+      }
+      body {
+        margin: 0;
+        color: #d6d3cd;
+        font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+        line-height: 1.7;
+      }
+      /* Colonne de contenu centrée */
+      .column {
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 6rem 20px 8rem;
+      }
+      h1 {
+        margin: 0 0 2rem;
+        font-size: clamp(2rem, 5vw, 3.2rem);
+        line-height: 1.1;
+        color: #fff;
+      }
+      p {
+        margin: 0 0 1.5rem;
+        font-size: 1.05rem;
+      }
+      /* Scène 3D intégrée à la colonne */
+      .cards-stage {
+        position: relative;
+        aspect-ratio: 16 / 10;
+        max-height: 90dvh;
+        margin: 3rem 0;
+        overflow: hidden;
+        border-radius: 6px;
+        background: #000;
+        outline: none;
+      }
+      .cards-stage canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        touch-action: pan-y; /* le scroll de la page reste possible au doigt */
+      }
+      /* Texte d'attente, avant l'animation de démarrage */
+      .cards-loading {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #000;
+        color: #fff;
+        font-size: 2rem;
+        letter-spacing: 0.3em;
+        text-indent: 0.3em;
+        transition: opacity 0.6s ease;
+        pointer-events: none;
+      }
+      .cards-loading.is-hidden {
+        opacity: 0;
+      }
+    </style>
   </head>
   <body>
-    <canvas id="scene"></canvas>
+    <main class="column">
+      <h1>Un jeu de cartes, quatre tableaux</h1>
+
+      <p>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspendisse lectus tortor, dignissim sit
+        amet, adipiscing nec, ultricies sed, dolor. Cras elementum ultrices diam. Maecenas ligula massa, varius a,
+        semper congue, euismod non, mi. Proin porttitor, orci nec nonummy molestie, enim est eleifend mi, non fermentum
+        diam nisl sit amet erat.
+      </p>
+      <p>
+        Duis semper. Duis arcu massa, scelerisque vitae, consequat in, pretium a, enim. Pellentesque congue. Ut in risus
+        volutpat libero pharetra tempor. Cras vestibulum bibendum augue. Praesent egestas leo in pede. Praesent blandit
+        odio eu enim. Pellentesque sed dui ut augue blandit sodales. Vestibulum ante ipsum primis in faucibus orci
+        luctus et ultrices posuere cubilia curae.
+      </p>
+      <p>
+        Aliquam nibh. Mauris ac mauris sed pede pellentesque fermentum. Maecenas adipiscing ante non diam sodales
+        hendrerit. Ut velit mauris, egestas sed, gravida nec, ornare ut, mi. Aenean ut orci vel massa suscipit pulvinar.
+        Nulla sollicitudin. Fusce varius, ligula non tempus aliquam, nunc turpis ullamcorper nibh, in tempus sapien eros
+        vitae ligula.
+      </p>
+      <p>
+        Pellentesque rhoncus nunc et augue. Integer id felis. Curabitur aliquet pellentesque diam. Integer quis metus
+        vitae elit lobortis egestas. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Morbi vel erat non mauris
+        convallis vehicula. Nulla et sapien. Integer tortor tellus, aliquam faucibus, convallis id, congue eu, quam.
+      </p>
+
+      <div class="cards-stage" id="stage" tabindex="0">
+        <canvas id="scene"></canvas>
+        <div class="cards-loading" id="loading">...</div>
+      </div>
+
+      <p>
+        Mauris ullamcorper felis vitae erat. Proin feugiat, augue non elementum posuere, metus purus iaculis lectus, et
+        tristique ligula justo vitae magna. Aliquam convallis sollicitudin purus. Praesent aliquam, enim at fermentum
+        mollis, ligula massa adipiscing nisl, ac euismod nibh nisl eu lectus.
+      </p>
+      <p>
+        Fusce vulputate eleifend sapien. Vestibulum purus quam, scelerisque ut, mollis sed, nonummy id, metus. Nullam
+        accumsan lorem in dui. Cras ultricies mi eu turpis hendrerit fringilla. Vestibulum ante ipsum primis in faucibus
+        orci luctus et ultrices posuere cubilia curae; In ac dui quis mi consectetuer lacinia.
+      </p>
+      <p>
+        Nam pretium turpis et arcu. Duis arcu tortor, suscipit eget, imperdiet nec, imperdiet iaculis, ipsum. Sed
+        aliquam ultrices mauris. Integer ante arcu, accumsan a, consectetuer eget, posuere ut, mauris. Praesent
+        adipiscing. Phasellus ullamcorper ipsum rutrum nunc.
+      </p>
+    </main>
     <script type="module" src="/src/cards/main.js"></script>
   </body>
 </html>

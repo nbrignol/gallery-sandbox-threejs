@@ -104,3 +104,8 @@ export const AO_FADE_HEIGHT = 0.3; // hauteur de montée (m) à laquelle l'AO a 
 export const AO_SPREAD = 2; // élargissement par mètre de montée
 export const AO_OFFSET_Z = 0.015; // décalage de l'AO vers l'avant (+Z, côté caméra) : on ne voit presque plus l'ombre derrière la carte (m)
 export const AO_SQUASH_Z = 0.3; // écrase l'ombre en profondeur : 1 = carré, 0.5 = marge deux fois plus courte devant/derrière que sur les côtés
+
+// Animation de démarrage (jouée quand la scène apparaît à l'écran)
+export const INTRO_DELAY = 0.5; // pause après la disparition du texte (s)
+export const INTRO_DURATION = 2.8; // durée : caméra qui s'abaisse + lumière qui s'élargit (s)
+export const INTRO_SPOT_START_DEG = 1.5; // demi-angle initial du spot (°)

@@ -17,7 +17,7 @@ function button(className, label, text, onClick) {
 
 // Panneau d'information d'une carte, à droite. API : show({ index, total, title, desc }), hide(),
 // setBusy(bool). Les boutons ‹ › n'apparaissent que si onPrev / onNext sont fournis.
-export function createCardPanel({ onPrev, onNext, onClose }) {
+export function createCardPanel({ parent = document.body, onPrev, onNext, onClose }) {
   const root = el('aside', 'card-panel');
   const meta = el('p', 'card-panel-meta');
   const title = el('h2', 'card-panel-title');
@@ -32,7 +32,7 @@ export function createCardPanel({ onPrev, onNext, onClose }) {
     nav.append(...navButtons);
     root.append(nav);
   }
-  document.body.append(root);
+  parent.append(root);
 
   return {
     show({ index, total, title: text, desc: description }) {
