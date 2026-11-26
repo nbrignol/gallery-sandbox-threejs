@@ -40,7 +40,10 @@ const FACE_TO_CAMERA = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3
 // `viewInfo` : fenêtre de rendu du canvas dans le cadre de référence de la caméra (celui de la scène dans la page) :
 // { x, y, w, h, fullW, fullH } en pixels. Au repos x = y = 0 et w, h = fullW, fullH ; en plein écran, la fenêtre
 // déborde du cadre de référence, ce qui garde la table exactement à sa place.
-export function createFlow({ canvas, camera, hover, panel, viewInfo }) {
+// `onEdge(step)` : appelé quand la navigation ‹ › sortirait de la galerie ; renvoie true s'il prend le relais
+// (navigation globale entre galeries), sinon la navigation reboucle dans la galerie. `locked()` : true pour
+// interdire toute ouverture de carte (transfert entre galeries en cours).
+export function createFlow({ canvas, camera, hover, panel, viewInfo, onEdge, locked = () => false }) {
   const raycaster = new THREE.Raycaster();
   // Cartes en cours de pioche / flottantes / en retour : { card, p, target, offset, shown }.
   // Pendant une navigation, deux cartes coexistent (celle qui repart, celle qui arrive).
@@ -206,6 +209,7 @@ export function createFlow({ canvas, camera, hover, panel, viewInfo }) {
 
   let lastTime = 0;
   canvas.addEventListener('click', (event) => {
+    if (locked()) return;
     if (entries.length === 0 && !pending) {
       const card = hover.cardAt(event.clientX, event.clientY);
       if (card) start(card, lastTime);
@@ -223,7 +227,9 @@ export function createFlow({ canvas, camera, hover, panel, viewInfo }) {
     const current = floating();
     if (!current) return;
     const total = hover.count;
-    const next = hover.cards[(current.card.userData.index + step + total) % total];
+    const target = current.card.userData.index + step;
+    if ((target < 0 || target >= total) && onEdge?.(step)) return; // une autre galerie prend le relais
+    const next = hover.cards[(target + total) % total];
     hold = true;
     drop(current, NAV_SPEED);
     panel.setBusy(true);
@@ -242,11 +248,11 @@ export function createFlow({ canvas, camera, hover, panel, viewInfo }) {
     seek(p) {
       if (entries[0]) entries[0].p = THREE.MathUtils.clamp(p, 0, 1);
     },
-    drop() {
+    drop(speed = 1) {
       const current = floating();
       if (current) {
         hold = false;
-        drop(current);
+        drop(current, speed);
       }
     },
     // Plein écran (0 ou 1, sans transition) : le canvas passe en plein écran dès qu'une carte est piochée et ne

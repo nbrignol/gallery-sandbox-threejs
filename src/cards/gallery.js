@@ -20,6 +20,7 @@ import {
   INTRO_ENABLED,
   INTRO_DURATION,
   INTRO_SPOT_START_DEG,
+  NAV_SPEED,
   SPOT_ANGLE_DEG,
   SPOT_COLOR,
   SPOT_DECAY,
@@ -70,6 +71,33 @@ function readItems(container) {
   return items;
 }
 
+// ---- Navigation globale entre galeries ----------------------------------------------------------------
+const registry = []; // galeries 3D actives, dans l'ordre de la page
+let globalNav = true; // case « Navigation globale »
+let handoffBusy = false; // un transfert d'une galerie à l'autre est en cours : plus aucune interaction
+let handoffToken = 0; // invalide un transfert en cours (bascule en liste, galerie détruite)
+
+// Sortie d'une galerie par ‹ › ou le clavier : on range la carte, on attend que le canvas soit revenu dans la
+// page, on fait défiler jusqu'à la galerie voisine (boucle sur toute la page), puis on y ouvre la bonne carte
+// (la première en avançant, la dernière en reculant). Renvoie false si la navigation reste dans la galerie.
+function navigateAcross(from, step) {
+  if (!globalNav || registry.length < 2 || handoffBusy) return false;
+  const to = registry[(registry.indexOf(from) + step + registry.length) % registry.length];
+  const cardIndex = step > 0 ? 0 : to.count - 1;
+  const token = ++handoffToken;
+  handoffBusy = true;
+  from.leave();
+  from.whenClosed(async () => {
+    if (token !== handoffToken) return;
+    await to.scrollIntoView();
+    if (token !== handoffToken) return;
+    to.stage.focus({ preventScroll: true }); // le clavier suit la galerie ouverte
+    to.openAt(cardIndex);
+    handoffBusy = false;
+  });
+  return true;
+}
+
 let stageCount = 0;
 
 // Remplace le conteneur par le bloc de la scène (même structure et mêmes classes que le CSS de la page).
@@ -106,7 +134,7 @@ function buildStage(container) {
 }
 
 // Une galerie = un canvas (son propre contexte WebGL, sa scène, sa caméra, ses cartes).
-export function createCardGallery(container, { testParams = false } = {}) {
+export function createCardGallery(container, { testParams = false, navigate = null } = {}) {
   const items = readItems(container);
   if (items.length === 0) {
     console.warn('cartes : aucune carte dans', container);
@@ -237,6 +265,7 @@ export function createCardGallery(container, { testParams = false } = {}) {
   }
   let lastExpansionKey = '';
   let expanded = false; // le canvas a quitté la page (plein écran en cours ou terminé)
+  let closedCallbacks = []; // rappels à appeler quand le canvas est revenu dans la page
   const resizeObserver = new ResizeObserver(fitCamera);
   resizeObserver.observe(stage);
   fitCamera();
@@ -255,6 +284,7 @@ export function createCardGallery(container, { testParams = false } = {}) {
       spot.intensity = SPOT_INTENSITY;
       hemi.intensity = HEMI_INTENSITY;
       resizeView(stage.clientWidth, stage.clientHeight);
+      closedCallbacks.splice(0).forEach((callback) => callback());
       return;
     }
     const from = stage.getBoundingClientRect();
@@ -321,7 +351,7 @@ export function createCardGallery(container, { testParams = false } = {}) {
 
   // Le survol est suspendu dès qu'une carte est piochée (flow est défini juste après)
   let flow = null;
-  const hover = createHover({ canvas, camera, cards, enabled: () => intro.state === 'done' && !flow?.isActive() });
+  const hover = createHover({ canvas, camera, cards, enabled: () => intro.state === 'done' && !flow?.isActive() && !handoffBusy });
   const panel = createCardPanel({
     parent: view,
     returnFocus: stage,
@@ -329,13 +359,23 @@ export function createCardGallery(container, { testParams = false } = {}) {
     onPrev: items.length > 1 ? () => flow.goTo(-1) : undefined,
     onNext: items.length > 1 ? () => flow.goTo(1) : undefined,
   });
-  flow = createFlow({ canvas, camera, hover, panel, viewInfo });
+  let api = null; // l'instance, définie en fin de fonction (utile à la navigation entre galeries)
+  flow = createFlow({
+    canvas,
+    camera,
+    hover,
+    panel,
+    viewInfo,
+    onEdge: (step) => navigate?.(api, step) ?? false,
+    locked: () => handoffBusy,
+  });
   const contactAO = createContactAO({ scene, cards });
   const tooltip = createTooltip({ scene, camera, anchorOf: hover.anchorOf });
 
   // Clavier (quand la scène a le focus : clic ou Tab) : sur la table, ← → sélectionnent une carte (comme le survol) et Entrée la pioche ;
   // carte flottante : ← → affichent la précédente / suivante, Échap la repose.
   stage.addEventListener('keydown', (event) => {
+    if (handoffBusy) return;
     if (event.repeat || event.altKey || event.ctrlKey || event.metaKey) return;
     const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
     if (step) {
@@ -416,13 +456,70 @@ export function createCardGallery(container, { testParams = false } = {}) {
     renderer.setAnimationLoop(null);
     resizeObserver.disconnect();
     intersectionObserver.disconnect();
+    handoffToken++; // annule un transfert entre galeries en cours
+    handoffBusy = false;
+    closedCallbacks = [];
     if (expanded) document.documentElement.style.overflow = '';
     renderer.dispose();
     renderer.forceContextLoss();
     restore();
   }
 
-  return { stage, canvas, cards, destroy };
+  // Fait défiler la page jusqu'à cette galerie (toujours, même si elle est visible) et attend la fin.
+  // Défilement animé par nos soins (accélération puis freinage, durée proportionnelle à la distance) : il est
+  // fluide quel que soit le navigateur ou le `scroll-behavior` de la page ; instantané avec prefers-reduced-motion.
+  // Un geste de l'utilisateur (molette, toucher) l'interrompt.
+  function scrollIntoViewAndWait() {
+    return new Promise((resolve) => {
+      const rect = stage.getBoundingClientRect();
+      const maxY = document.documentElement.scrollHeight - window.innerHeight;
+      const startY = window.scrollY;
+      const targetY = THREE.MathUtils.clamp(startY + rect.top - (window.innerHeight - rect.height) / 2, 0, Math.max(0, maxY));
+      const distance = Math.abs(targetY - startY);
+      const jump = (y) => window.scrollTo({ top: y, behavior: 'instant' }); // 'instant' : ignore un scroll-behavior: smooth du CSS
+      if (distance < 1 || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        jump(targetY);
+        resolve();
+        return;
+      }
+      const duration = THREE.MathUtils.clamp(distance * 0.35, 450, 1200); // ms
+      const begin = performance.now();
+      let frame = 0;
+      const stop = () => {
+        cancelAnimationFrame(frame);
+        window.removeEventListener('wheel', stop);
+        window.removeEventListener('touchstart', stop);
+        resolve();
+      };
+      const step = (now) => {
+        const t = Math.min(1, (now - begin) / duration);
+        jump(startY + (targetY - startY) * easeInOutCubic(t));
+        if (t < 1) frame = requestAnimationFrame(step);
+        else stop();
+      };
+      window.addEventListener('wheel', stop, { passive: true });
+      window.addEventListener('touchstart', stop, { passive: true });
+      frame = requestAnimationFrame(step);
+    });
+  }
+
+  api = {
+    stage,
+    canvas,
+    cards,
+    count: cards.length,
+    destroy,
+    // Range la carte flottante (animation de navigation, plus rapide)
+    leave: () => flow.drop(NAV_SPEED),
+    // Appelle `callback` quand plus aucune carte n'est ouverte et que le canvas est revenu dans la page
+    whenClosed(callback) {
+      if (!expanded && !flow.isActive()) callback();
+      else closedCallbacks.push(callback);
+    },
+    scrollIntoView: scrollIntoViewAndWait,
+    openAt: (index) => flow.start(cards[index], clock.elapsedTime),
+  };
+  return api;
 }
 
 // Choix d'affichage : galerie 3D ou liste. Défaut : liste si l'utilisateur demande de réduire les animations
@@ -439,8 +536,9 @@ function preferredView() {
   return matchMedia('(prefers-reduced-motion: reduce)').matches ? 'list' : 'gallery';
 }
 
-// Remplace chaque .card-canvas-gallery de la page par une galerie, avec un bouton global « liste / galerie 3D »
-// (en haut à droite de la page) qui bascule toutes les galeries à la fois.
+// Remplace chaque .card-canvas-gallery de la page par une galerie. En haut à droite de la page :
+// le bouton global « liste / galerie 3D » et la case « Navigation globale ».
+const NAV_KEY = 'cards-global-nav';
 export function initCardGalleries() {
   const entries = [...document.querySelectorAll('.card-canvas-gallery')].map((container, index) => {
     container.dataset.ready = ''; // le script a pris la main : fin de la place réservée par le CSS
@@ -448,24 +546,49 @@ export function initCardGalleries() {
   });
   if (entries.length === 0) return;
 
+  const controls = el('div', 'cards-controls');
   const toggle = el('button', 'cards-toggle');
   toggle.type = 'button';
-  document.body.append(toggle);
+  const check = el('label', 'cards-check');
+  const checkbox = el('input');
+  checkbox.type = 'checkbox';
+  try {
+    globalNav = localStorage.getItem(NAV_KEY) !== 'off'; // coché par défaut
+  } catch {
+    globalNav = true;
+  }
+  checkbox.checked = globalNav;
+  check.append(checkbox, ' Navigation globale');
+  controls.append(check, toggle);
+  document.body.append(controls);
+
+  checkbox.addEventListener('change', () => {
+    globalNav = checkbox.checked;
+    try {
+      localStorage.setItem(NAV_KEY, globalNav ? 'on' : 'off');
+    } catch {
+      // pas de mémorisation possible : sans conséquence
+    }
+  });
 
   function show(view) {
+    registry.length = 0;
     for (const entry of entries) {
       entry.gallery?.destroy(); // rend le conteneur et sa liste à la page
       entry.gallery = null;
       if (view === 'gallery') {
-        entry.gallery = createCardGallery(entry.container, { testParams: entry.index === 0 });
+        entry.gallery = createCardGallery(entry.container, { testParams: entry.index === 0, navigate: navigateAcross });
+        if (entry.gallery) registry.push(entry.gallery);
       }
     }
     // Libellé selon l'état réel (une galerie qui n'a pas pu démarrer reste en liste)
-    toggle.textContent = entries.some((entry) => entry.gallery) ? 'Afficher en liste' : 'Afficher en galerie 3D';
+    const active = registry.length > 0;
+    toggle.textContent = active ? 'Afficher en liste' : 'Afficher en galerie 3D';
+    check.hidden = !active; // la navigation globale n'a de sens qu'en mode galerie
   }
 
   toggle.addEventListener('click', () => {
-    const next = entries.some((entry) => entry.gallery) ? 'list' : 'gallery';
+    const next = registry.length > 0 ? 'list' : 'gallery';
     try {
       localStorage.setItem(VIEW_KEY, next);
     } catch {
