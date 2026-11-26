@@ -17,11 +17,18 @@ function button(className, label, text, onClick) {
 
 // Panneau d'information d'une carte, à droite. API : show({ index, total, title, desc }), hide(),
 // setBusy(bool). Les boutons ‹ › n'apparaissent que si onPrev / onNext sont fournis.
-export function createCardPanel({ parent = document.body, onPrev, onNext, onClose }) {
+let panelCount = 0;
+
+// `returnFocus` : élément qui reprend le focus quand le panneau se ferme alors qu'il le contenait (accessibilité).
+export function createCardPanel({ parent = document.body, returnFocus, onPrev, onNext, onClose }) {
   const root = el('aside', 'card-panel');
+  root.setAttribute('role', 'dialog');
   const meta = el('p', 'card-panel-meta');
   const title = el('h2', 'card-panel-title');
   const desc = el('p', 'card-panel-desc');
+  title.id = `card-panel-title-${++panelCount}`;
+  title.setAttribute('aria-live', 'polite'); // le titre est annoncé quand on passe d'une carte à l'autre
+  root.setAttribute('aria-labelledby', title.id);
   root.append(button('card-panel-close', 'Fermer', '×', onClose), meta, title, desc);
 
   const navButtons = [];
@@ -42,6 +49,7 @@ export function createCardPanel({ parent = document.body, onPrev, onNext, onClos
       root.classList.add('is-open');
     },
     hide() {
+      if (root.contains(document.activeElement)) returnFocus?.focus({ preventScroll: true });
       root.classList.remove('is-open');
     },
     setBusy(busy) {

@@ -5,7 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Cartes</title>
     <script>
-      document.documentElement.classList.add('js');
+      // Choix d'affichage avant le premier rendu (même logique que initCardGalleries dans src/cards/gallery.js) :
+      // galerie 3D par défaut, liste si prefers-reduced-motion, ou le dernier choix du bouton.
+      (function () {
+        var view = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'list' : 'gallery';
+        try {
+          var saved = localStorage.getItem('cards-view');
+          if (saved === 'list' || saved === 'gallery') view = saved;
+        } catch (error) {}
+        document.documentElement.dataset.cards = view;
+      })();
     </script>
     <style>
       html {
@@ -37,10 +46,11 @@
         font-size: 1.05rem;
       }
       /* Scène 3D intégrée à la colonne */
-      /* Avant que le script remplace la galerie : la liste est masquée et la place de la scène est déjà réservée
-         (même taille que .cards-stage, sans saut de mise en page). La classe .js évite de tout masquer sans script. */
+      /* Avant que le script remplace la galerie (data-ready absent) : en mode galerie, la liste est masquée et la place
+         de la scène est déjà réservée (même taille que .cards-stage, sans saut de mise en page). Sans script, ou en
+         mode liste, la liste reste visible. */
       .cards-stage,
-      .js .card-canvas-gallery {
+      html[data-cards='gallery'] .card-canvas-gallery:not([data-ready]) {
         position: relative;
         /*aspect-ratio: 16 / 9;*/
         aspect-ratio: 2 / 1;
@@ -48,10 +58,72 @@
         margin: 3rem 0;
         overflow: hidden;
         border-radius: 6px;
-        outline: none;
       }
-      .js .card-canvas-gallery > * {
+      .cards-stage:focus-visible,
+      .cards-toggle:focus-visible {
+        outline: 2px solid #e08a4f;
+        outline-offset: 3px;
+      }
+      html[data-cards='gallery'] .card-canvas-gallery:not([data-ready]) > * {
         display: none;
+      }
+      /* Masqué visuellement mais lu par les lecteurs d'écran (contrairement à display: none) */
+      .sr-only {
+        position: absolute !important;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        border: 0;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+      /* Affichage en liste (prefers-reduced-motion, ou choix de l'utilisateur) */
+      .card-canvas-gallery ul {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+        gap: 1.5rem;
+        margin: 1.5rem 0 3rem;
+        padding: 0;
+        list-style: none;
+      }
+      .card-canvas-gallery li img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 1;
+        object-fit: cover;
+        border-radius: 4px;
+      }
+      .card-canvas-gallery li h3 {
+        margin: 0.75rem 0 0.25rem;
+        font-size: 1.05rem;
+        color: #e08a4f;
+      }
+      .card-canvas-gallery li p {
+        margin: 0;
+        font-size: 0.95rem;
+      }
+      /* Bouton galerie 3D / liste */
+      .cards-toggle {
+        font: inherit;
+        font-size: 0.85rem;
+        color: #f2f2f2;
+        background: rgba(20, 20, 20, 0.78);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 999px;
+        padding: 0.4rem 0.9rem;
+        cursor: pointer;
+      }
+      .cards-toggle:hover {
+        background: rgba(45, 45, 45, 0.92);
+      }
+      /* Bouton global, en haut à droite de la page (sous le plein écran d'une carte, z-index 19-20) */
+      .cards-toggle {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: 10;
       }
       /* Zone de dessin : remplit le bloc, ou passe en plein écran (position et taille pilotées par le script) */
       .cards-view {

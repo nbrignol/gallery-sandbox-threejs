@@ -10,14 +10,17 @@ export const CARD_FACE_BORDER = 28; // bordure blanche (px, sur la texture de la
 export const CARD_FACE_COLOR = '#ffffff'; // couleur de la bordure
 export const CARD_BACK_TEXTURE = `${import.meta.env.BASE_URL}cards/card-back.svg`;
 
-// Disposition : une ligne, de gauche à droite. Un écart offsetX < CARD_SIZE entre deux voisines
-// donne un chevauchement ; offsetZ = décalage en profondeur ; rotationDeg = rotation à plat.
-// artwork = clé du catalogue data/artworks.js.
-export const CARDS = [
-  { artwork: 'joconde', offsetX: -1.5, offsetZ: 0.05, rotationDeg: -6 },
-  { artwork: 'nuit', offsetX: -0.5, offsetZ: -0.04, rotationDeg: 3 },
-  { artwork: 'perle', offsetX: 0.5, offsetZ: 0.06, rotationDeg: -2 },
-  { artwork: 'baiser', offsetX: 1.5, offsetZ: -0.03, rotationDeg: 7 },
+// Disposition : toujours une seule rangée, de gauche à droite, centrée, quel que soit le nombre de cartes
+// (la caméra recule pour tout cadrer). Un pas CARD_SPACING < CARD_SIZE donne un chevauchement.
+export const CARD_SPACING = 1.0; // écart entre les centres de deux cartes voisines (m)
+// Décalages « arbitraires » appliqués tour à tour aux cartes (on boucle dessus : la carte i prend l'entrée i % 5) :
+// offsetZ = décalage en profondeur (m), rotationDeg = rotation à plat (°).
+export const CARD_JITTER = [
+  { offsetZ: 0.05, rotationDeg: -6 },
+  { offsetZ: -0.04, rotationDeg: 3 },
+  { offsetZ: 0.06, rotationDeg: -2 },
+  { offsetZ: -0.03, rotationDeg: 7 },
+  { offsetZ: 0.0, rotationDeg: -4 },
 ];
 
 // Sol (même texture que la galerie : voir world/materials.js)
