@@ -41,3 +41,19 @@ export const SPOT_INTENSITY = 260; // candelas (décroissance physique)
 export const SPOT_ANGLE_DEG = 26; // demi-angle du cône
 export const SPOT_PENUMBRA = 0.85; // 1 = bord totalement doux
 export const SPOT_DECAY = 2;
+
+// Survol d'une carte : elle se soulève et vibre brièvement
+export const HOVER_LIFT = 0.1; // hauteur de soulèvement (m)
+export const HOVER_SHAKE = 0.008; // amplitude de la vibration en X/Z (m)
+export const HOVER_TILT_DEG = 1.5; // amplitude du léger roulis/tangage (°)
+export const HOVER_SHAKE_CYCLES = 2; // nombre d'allers-retours de la vibration (une seule fois, quand la carte monte)
+export const HOVER_SHAKE_DURATION = 0.3; // durée de la vibration (s), amortie jusqu'à l'arrêt
+export const HOVER_SMOOTH = 12; // rapidité du lissage de l'entrée/sortie du survol (1/s)
+export const HOVER_NEIGHBOR_PUSH = 0.18; // écartement (m) des cartes voisines (-1 / +1) de la carte survolée, pour la laisser passer
+
+// Ombres du spot (cartes sur le sol et entre elles)
+export const SHADOW_MAP_SIZE = 2048;
+export const SHADOW_BIAS = -0.0004;
+export const SHADOW_NORMAL_BIAS = 0.01;
+export const SHADOW_RADIUS = 4; // douceur du bord
+export const SHADOW_INTENSITY = 0.5; // opacité des ombres : 1 = noires, 0 = invisibles

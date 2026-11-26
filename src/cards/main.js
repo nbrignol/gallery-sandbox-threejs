@@ -17,16 +17,24 @@ import {
   SPOT_DECAY,
   SPOT_INTENSITY,
   SPOT_PENUMBRA,
+  SHADOW_BIAS,
+  SHADOW_INTENSITY,
+  SHADOW_MAP_SIZE,
+  SHADOW_NORMAL_BIAS,
+  SHADOW_RADIUS,
   SPOT_POSITION,
 } from './config.js';
 import { createFloor } from './floor.js';
 import { createCard, loadBackTexture } from './card.js';
+import { createHover } from './hover.js';
 import './cards.css';
 
 const canvas = document.getElementById('scene');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = TONE_EXPOSURE;
 
@@ -38,9 +46,19 @@ scene.add(new THREE.HemisphereLight(HEMI_SKY_COLOR, HEMI_GROUND_COLOR, HEMI_INTE
 const spot = new THREE.SpotLight(SPOT_COLOR, SPOT_INTENSITY, 0, THREE.MathUtils.degToRad(SPOT_ANGLE_DEG), SPOT_PENUMBRA, SPOT_DECAY);
 spot.position.set(...SPOT_POSITION);
 spot.target.position.set(0, 0, 0);
+spot.castShadow = true;
+spot.shadow.mapSize.set(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);
+spot.shadow.bias = SHADOW_BIAS;
+spot.shadow.normalBias = SHADOW_NORMAL_BIAS;
+spot.shadow.radius = SHADOW_RADIUS;
+spot.shadow.intensity = SHADOW_INTENSITY;
+spot.shadow.camera.near = 2;
+spot.shadow.camera.far = 14;
 scene.add(spot, spot.target);
 
-scene.add(createFloor());
+const floor = createFloor();
+floor.receiveShadow = true;
+scene.add(floor);
 
 // Cartes : dos commun, face = tableau
 const backTexture = loadBackTexture(CARD_BACK_TEXTURE);
@@ -48,6 +66,8 @@ const cards = CARDS.map((config, index) => {
   const artwork = artworks[config.artwork];
   if (!artwork) throw new Error(`cartes : œuvre inconnue « ${config.artwork} ».`);
   const card = createCard({ config, artwork, index, backTexture });
+  card.castShadow = true;
+  card.receiveShadow = true;
   scene.add(card);
   return card;
 });
@@ -77,4 +97,10 @@ function fitCamera() {
 window.addEventListener('resize', fitCamera);
 fitCamera();
 
-renderer.setAnimationLoop(() => renderer.render(scene, camera));
+const hover = createHover({ canvas, camera, cards });
+
+const clock = new THREE.Clock();
+renderer.setAnimationLoop(() => {
+  hover.update(Math.min(clock.getDelta(), 0.1), clock.elapsedTime);
+  renderer.render(scene, camera);
+});
