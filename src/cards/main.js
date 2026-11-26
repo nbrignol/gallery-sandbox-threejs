@@ -11,7 +11,9 @@ import {
   CARD_SIZE,
   EXPAND_BORDER_RADIUS,
   EXPAND_DIM_TABLE,
-  EXPAND_VEIL_OPACITY,
+  SHADE_COLOR,
+  VEIL_BLUR,
+  SHADE_OPACITY,
   FLOOR_TRANSPARENT,
   HEMI_GROUND_COLOR,
   HEMI_INTENSITY,
@@ -46,6 +48,8 @@ const canvas = document.getElementById('scene');
 const stage = document.getElementById('stage');
 const view = document.getElementById('view');
 const backdrop = document.getElementById('backdrop');
+// Voile HTML derrière le canvas : il floute la page quand une carte flotte (le canvas, au-dessus, reste net)
+backdrop.style.backdropFilter = backdrop.style.webkitBackdropFilter = `blur(${VEIL_BLUR}px)`;
 const loading = document.getElementById('loading');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: FLOOR_TRANSPARENT });
 renderer.autoClear = false; // l'effacement est fait à la main : 2 passes quand une carte est au premier plan
@@ -78,6 +82,23 @@ scene.add(spot, spot.target);
 // Les lumières servent aussi à la passe « premier plan » (couche 1)
 spot.layers.enable(1);
 hemi.layers.enable(1);
+
+// Plan noir plein écran (en coordonnées écran), dessiné après la table et avant la carte au premier plan
+const shade = new THREE.Mesh(
+  new THREE.PlaneGeometry(2, 2),
+  new THREE.ShaderMaterial({
+    uniforms: { uOpacity: { value: 0 }, uColor: { value: new THREE.Color(SHADE_COLOR) } },
+    vertexShader: 'void main() { gl_Position = vec4(position.xy, 0.0, 1.0); }',
+    fragmentShader: 'uniform float uOpacity; uniform vec3 uColor; void main() { gl_FragColor = vec4(uColor, uOpacity); }',
+    transparent: true,
+    depthTest: false,
+    depthWrite: false,
+  }),
+);
+shade.frustumCulled = false;
+shade.renderOrder = 1000;
+shade.visible = false;
+scene.add(shade);
 
 const floor = createFloor();
 floor.receiveShadow = true;
@@ -149,7 +170,7 @@ fitCamera();
 
 // Plein écran : k = 0 → le canvas occupe la scène dans la page ; k = 1 → toute la fenêtre.
 // Le bloc de la scène garde sa taille (la mise en page ne bouge pas). Options (config) : voile sombre derrière
-// le canvas (EXPAND_VEIL_OPACITY) et extinction de la lumière de la table (EXPAND_DIM_TABLE).
+// le canvas (VEIL_BLUR) et extinction de la lumière de la table (EXPAND_DIM_TABLE).
 function applyExpansion(k) {
   if (k <= 0.0005) {
     if (!expanded) return;
@@ -157,7 +178,6 @@ function applyExpansion(k) {
     lastExpansionKey = '';
     view.classList.remove('is-expanded');
     view.style.cssText = '';
-    backdrop.style.opacity = '0';
     document.documentElement.style.overflow = '';
     spot.intensity = SPOT_INTENSITY;
     hemi.intensity = HEMI_INTENSITY;
@@ -181,7 +201,6 @@ function applyExpansion(k) {
   if (key === lastExpansionKey) return;
   lastExpansionKey = key;
   view.style.cssText = `left:${left}px;top:${top}px;width:${width}px;height:${height}px;border-radius:${EXPAND_BORDER_RADIUS * (1 - k)}px`;
-  backdrop.style.opacity = String(k * EXPAND_VEIL_OPACITY);
   if (EXPAND_DIM_TABLE) {
     spot.intensity = SPOT_INTENSITY * (1 - k);
     hemi.intensity = HEMI_INTENSITY * (1 - k);
@@ -297,6 +316,10 @@ renderer.setAnimationLoop(() => {
   hover.update(dt, clock.elapsedTime);
   flow.update(dt, clock.elapsedTime);
   applyExpansion(flow.expansion());
+  const shadeOpacity = SHADE_OPACITY * flow.shade();
+  shade.material.uniforms.uOpacity.value = shadeOpacity;
+  shade.visible = shadeOpacity > 0.001;
+  backdrop.style.opacity = String(flow.shade()); // le flou apparaît et disparaît avec le plan noir
   contactAO.update();
   tooltip.update(dt, flow.isActive() ? null : hover.hovered);
   // Rendu : la table (couche 0), puis, profondeur remise à zéro, la carte au premier plan (couche 1)

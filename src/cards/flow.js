@@ -254,6 +254,14 @@ export function createFlow({ canvas, camera, hover, panel, viewInfo }) {
     // inchangé) : seule la carte voyage, de sa place sur la table jusqu'à la pose flottante.
     // Ancienne version (agrandissement progressif, piloté par la pioche) :
     //   let k = 0; for (const entry of entries) k = Math.max(k, smoothstep(EXPAND_START, 1, entry.p)); return k;
+    // Opacité relative (0..1) du plan noir derrière la carte flottante : elle monte avec la pioche, à partir du
+    // moment où la carte passe au premier plan (sinon elle serait assombrie elle aussi), et redescend au rangement.
+    shade() {
+      if (hold) return 1;
+      let k = 0;
+      for (const entry of entries) k = Math.max(k, smoothstep(MOVE_DELAY - MOVE_OVERLAP, 1, entry.p));
+      return k;
+    },
     expansion() {
       return entries.length > 0 || pending ? 1 : 0;
     },

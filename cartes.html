@@ -61,8 +61,7 @@
         position: fixed;
         inset: 0;
         z-index: 19;
-        background: #000; /* noir pur : les autres cartes, éteintes, disparaissent dedans */
-        opacity: 0;
+        opacity: 0; /* flou (backdrop-filter) réglé par le script, animé avec la pioche */
         pointer-events: none;
       }
       .cards-stage canvas {
