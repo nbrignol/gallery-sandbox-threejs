@@ -235,7 +235,7 @@ main {
   pointer-events: auto;
 }
 .card.is-expanded .capsule-title {
-  font-size: 1.25rem;
+  font-size: clamp(1.5rem, 3vw, 2rem);
   white-space: normal;
 }
 .card.is-expanded .capsule-btn {
@@ -276,14 +276,26 @@ main {
 .card.is-detail .capsule-down {
   display: none;
 }
-/* Fermer reste toujours accessible (tableau plein écran comme détail) : flottant, juste sous le bandeau */
+/* Fermer reste toujours accessible (tableau plein écran comme détail) : flottant en haut à droite, à la hauteur du logo.
+   C'est un popover manuel : il est affiché dans la « couche supérieure » du navigateur, donc au-dessus du bandeau et
+   de son dégradé, quel que soit le défilement ou le flottement de la carte. `inset: auto` annule le `inset: 0` du
+   style par défaut des popovers. */
 .card.is-expanded .capsule-close {
   position: fixed;
-  top: 4.5rem;
-  right: 1.25rem;
+  inset: 1.2rem 1.25rem auto auto;
+  margin: 0;
+  overflow: visible;
   background: #000;
   color: #fff;
   border-color: rgba(255, 255, 255, 0.6);
+  transition: opacity 0.2s;
+}
+.card.is-expanded .capsule-close:not(:popover-open) {
+  display: none;
+}
+/* Pendant l'animation d'ouverture, le bouton (hors de la carte qui grandit) attend que la carte soit en place */
+.card.is-moving .capsule-close {
+  opacity: 0;
 }
 .card.is-detail .card-article {
   display: block;
@@ -354,6 +366,11 @@ main {
   grid-column: 1 / -1;
   justify-self: center;
   margin-top: 0.5rem;
+  border: 0; /* seul le chevron : le contour du focus clavier reste (voir .capsule-btn:focus-visible) */
+}
+.capsule-down:hover {
+  background: none;
+  color: #fff;
 }
 .sr-only {
   position: absolute;

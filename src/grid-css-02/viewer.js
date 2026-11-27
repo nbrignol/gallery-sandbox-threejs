@@ -52,6 +52,13 @@ export function initViewer(root) {
     for (const el of [skip, banner, main]) el.inert = on;
   };
 
+  // Le bouton Fermer est un popover manuel (couche supérieure du navigateur) : on l'affiche / le masque avec le dialogue.
+  const setCloseVisible = (viewer, on) => {
+    const button = viewer.querySelector('.capsule-close');
+    if (on && !button.matches(':popover-open')) button.showPopover();
+    else if (!on && button.matches(':popover-open')) button.hidePopover();
+  };
+
   async function open(tile) {
     if (current) return;
     busy = true;
@@ -75,6 +82,7 @@ export function initViewer(root) {
     tile.classList.add('is-hole');
     viewer.classList.add('is-moving'); // le bouton Fermer (fixe) n'apparaît qu'une fois le dialogue en place
     setInert(true);
+    setCloseVisible(viewer, true);
     viewer.querySelector('.capsule-close').focus({ preventScroll: true });
 
     const animations = [animate(viewer, from, fullscreen()), animate(capsule, capsuleFrom, capsuleTo)];
@@ -193,6 +201,7 @@ export function initViewer(root) {
       viewer.scrollTop = 0; // si l'animation a été interrompue
     }
     resetDetail(viewer);
+    setCloseVisible(viewer, false);
     const capsuleFrom = size(capsule);
     const capsuleTo = size(tile.querySelector('.capsule'));
     viewer.classList.remove('is-settled');

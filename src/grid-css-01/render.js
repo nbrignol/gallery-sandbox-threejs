@@ -26,7 +26,7 @@ export function capsuleInner(key, art) {
     <button type="button" class="capsule-btn capsule-prev" aria-label="Tableau précédent">${ICON_PREV}</button>
     <h2 class="capsule-title" id="title-${key}">${escapeHtml(art.title)}</h2>
     <button type="button" class="capsule-btn capsule-next" aria-label="Tableau suivant">${ICON_NEXT}</button>
-    <button type="button" class="capsule-btn capsule-close" aria-label="Fermer">${ICON_CLOSE}</button>
+    <button type="button" class="capsule-btn capsule-close" popover="manual" aria-label="Fermer">${ICON_CLOSE}</button>
     <p class="capsule-desc" id="desc-${key}">${escapeHtml(art.desc)}</p>
     <button type="button" class="capsule-btn capsule-down" aria-label="Afficher le détail de l’œuvre">${ICON_DOWN}</button>`;
 }
@@ -53,7 +53,7 @@ export function renderPage(root) {
     <a class="skip" href="#main">Aller à la galerie</a>
     <header class="banner">
       ${LOGO}
-      <h1>Galerie de tableaux</h1>
+      <h1 class="sr-only">Galerie de tableaux</h1>
     </header>
     <main id="main" tabindex="-1">
       <ul class="grid" role="list" aria-label="Galerie de tableaux, ${entries.length} œuvres">

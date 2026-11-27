@@ -55,6 +55,13 @@ export function initViewer(root) {
     }
   };
 
+  // Le bouton Fermer est un popover manuel (couche supérieure du navigateur) : on l'affiche / le masque avec la carte.
+  const setCloseVisible = (card, on) => {
+    const button = card.querySelector('.capsule-close');
+    if (on && !button.matches(':popover-open')) button.showPopover();
+    else if (!on && button.matches(':popover-open')) button.hidePopover();
+  };
+
   async function open(card) {
     if (current) return;
     current = card;
@@ -64,10 +71,11 @@ export function initViewer(root) {
 
     const cardFrom = geometry(card.getBoundingClientRect(), '8px');
     const capsuleFrom = size(capsule);
-    card.classList.add('is-floating', 'is-expanded');
+    card.classList.add('is-floating', 'is-expanded', 'is-moving');
     const capsuleTo = size(capsule);
 
     setDialog(card, true);
+    setCloseVisible(card, true);
     setInert(true, slot);
     card.querySelector('.capsule-close').focus({ preventScroll: true });
 
@@ -78,6 +86,7 @@ export function initViewer(root) {
     await Promise.all(animations.map((a) => a.finished)).catch(() => {});
     animations.forEach((a) => a.cancel());
     busy = false;
+    card.classList.remove('is-moving');
     if (current === card) card.classList.add('is-settled'); // flottement
   }
 
@@ -156,6 +165,7 @@ export function initViewer(root) {
 
     next.classList.add('is-floating', 'is-expanded', 'is-top');
     setDialog(next, true);
+    setCloseVisible(next, true);
     setInert(true, next.parentElement);
     next.querySelector(focusSelector).focus({ preventScroll: true });
     current = next;
@@ -166,6 +176,7 @@ export function initViewer(root) {
     fade.cancel();
     previous.classList.remove('is-floating', 'is-expanded', 'is-settled');
     setDialog(previous, false);
+    setCloseVisible(previous, false);
     resetDetail(previous);
     next.classList.remove('is-top');
     next.classList.add('is-settled');
@@ -186,6 +197,7 @@ export function initViewer(root) {
       card.scrollTop = 0; // si l'animation a été interrompue
     }
     resetDetail(card);
+    setCloseVisible(card, false);
     const capsuleFrom = size(capsule);
     card.classList.remove('is-expanded', 'is-settled');
     const capsuleTo = size(capsule);
