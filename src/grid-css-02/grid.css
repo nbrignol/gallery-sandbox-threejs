@@ -170,6 +170,13 @@ main {
   overflow: hidden;
   background: #000;
 }
+.viewer-hero {
+  position: absolute;
+  inset: 0;
+}
+.viewer-article {
+  display: none;
+}
 .viewer.is-settled {
   animation: float 7s ease-in-out infinite;
 }
@@ -179,7 +186,13 @@ main {
 }
 
 /* Capsule agrandie : titre, bouton Fermer, description */
+/* Pas de translate sur la capsule du dialogue (centrage par marges auto) : un translate ferait de la capsule le repère
+   du bouton Fermer en position: fixed. */
 .viewer .capsule {
+  left: 0;
+  right: 0;
+  margin-inline: auto;
+  translate: none;
   bottom: 2rem;
   width: min(40rem, calc(100% - 2rem));
   display: grid;
@@ -222,6 +235,88 @@ main {
   from { opacity: 0; }
 }
 
+/* Fermer reste toujours accessible (tableau plein écran comme détail) : flottant, juste sous le bandeau.
+   Masqué pendant l'animation d'ouverture / fermeture (il n'est pas rogné par le dialogue qui grandit). */
+.viewer .capsule-close {
+  position: fixed;
+  top: 4.5rem;
+  right: 1.25rem;
+  background: #000;
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.6);
+}
+.viewer.is-moving .capsule-close {
+  opacity: 0;
+}
+
+/* Mode détail : le dialogue devient un conteneur qui défile ; le tableau (héros) est l'en-tête de la page et
+   l'article suit juste après la capsule. Pas de translate/rotate/scale : ils feraient du bouton Fermer
+   (position: fixed) un enfant positionné par rapport au dialogue et non à l'écran. */
+.viewer.is-detail {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  translate: none;
+  rotate: none;
+  scale: none;
+  animation: none;
+  background: #111;
+}
+.viewer.is-detail .viewer-hero {
+  position: relative;
+  inset: auto;
+  height: 100%;
+}
+.viewer.is-detail .capsule {
+  overflow: visible;
+  grid-template-columns: 1fr;
+}
+.viewer.is-detail .capsule-prev,
+.viewer.is-detail .capsule-next,
+.viewer.is-detail .capsule-down {
+  display: none;
+}
+.viewer.is-detail .viewer-article {
+  display: block;
+  padding: 3rem 1.25rem 6rem;
+  color: #e8e8e8;
+}
+.article {
+  max-width: 42rem;
+  margin: 0 auto;
+  font-size: 1.1rem;
+  line-height: 1.7;
+}
+.article h2 {
+  margin: 0 0 1rem;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  line-height: 1.15;
+  color: #fff;
+}
+.article h2:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 4px;
+}
+.article h3 {
+  margin: 2.25rem 0 0.5rem;
+  font-size: 1.4rem;
+  color: #fff;
+}
+.article p {
+  margin: 0 0 1.25rem;
+}
+.article-lead {
+  font-size: 1.3rem;
+  color: #fff;
+}
+.capsule-error {
+  grid-column: 1 / -1;
+  margin: 0.5rem 0 0;
+  text-align: center;
+  font-size: 0.95rem;
+  color: #ffb4b4;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tile {
     transition: none;
@@ -234,9 +329,9 @@ main {
   }
 }
 
-/* Navigation dans la capsule ouverte : précédent | titre | suivant | fermer, puis description, puis flèche bas */
+/* Navigation dans la capsule ouverte : précédent | titre | suivant, puis description, puis flèche bas */
 .viewer .capsule {
-  grid-template-columns: auto 1fr auto auto;
+  grid-template-columns: auto 1fr auto; /* précédent | titre | suivant (Fermer est flottant, hors grille) */
   align-items: center;
   column-gap: 0.5rem;
 }
