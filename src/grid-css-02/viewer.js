@@ -1,16 +1,12 @@
 // Plein écran, option B : la case reste dans la grille (masquée = le « trou ») et un dialogue séparé est créé à
 // l'ouverture, animé depuis la case vers l'écran. À la fermeture il retourne vers la case puis disparaît.
 import { artworks } from '../data/artworks.js';
-import { escapeHtml } from './render.js';
+import { escapeHtml, capsuleInner } from './render.js';
 
 const DURATION = 550;
+const FADE = 180;
 const EASING = 'cubic-bezier(0.2, 0.7, 0.2, 1)';
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
-
-const CLOSE_ICON = `
-  <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
-    <path d="M5 5l14 14M19 5L5 19" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
-  </svg>`;
 
 const size = (el) => ({ width: `${el.offsetWidth}px`, height: `${el.offsetHeight}px` });
 const geometry = (rect, radius) => ({
@@ -30,17 +26,15 @@ function animate(el, from, to) {
 function viewerHtml(art) {
   return `
     <img class="viewer-img" src="${escapeHtml(art.src)}" alt="" draggable="false" />
-    <div class="capsule">
-      <h2 class="capsule-title" id="viewer-title">${escapeHtml(art.title)}</h2>
-      <button type="button" class="capsule-close" aria-label="Fermer">${CLOSE_ICON}</button>
-      <p class="capsule-desc" id="viewer-desc">${escapeHtml(art.desc)}</p>
-    </div>`;
+    <div class="capsule">${capsuleInner(art)}</div>`;
 }
 
 export function initViewer(root) {
   const main = root.querySelector('main');
   const banner = root.querySelector('.banner');
   const skip = root.querySelector('.skip');
+  const status = root.querySelector('#status');
+  const tiles = [...root.querySelectorAll('.tile')];
   let current = null; // { tile, viewer }
   let busy = false;
 
@@ -80,6 +74,33 @@ export function initViewer(root) {
     viewer.classList.add('is-settled'); // flottement
   }
 
+  // Précédent / suivant : on garde le même dialogue, on change son contenu (fondu de l'image) et le trou se déplace.
+  async function navigate(delta) {
+    if (!current || busy) return;
+    busy = true;
+    const { viewer, tile: previous } = current;
+    const next = tiles[(tiles.indexOf(previous) + delta + tiles.length) % tiles.length];
+    const art = artworks[next.dataset.key];
+    const img = viewer.querySelector('.viewer-img');
+    const fade = (from, to) =>
+      reduceMotion.matches
+        ? { finished: Promise.resolve() }
+        : img.animate({ opacity: [from, to] }, { duration: FADE, fill: 'forwards' });
+
+    await fade(1, 0).finished.catch(() => {});
+    img.src = art.src;
+    viewer.querySelector('.capsule-title').textContent = art.title;
+    viewer.querySelector('.capsule-desc').textContent = art.desc;
+    previous.classList.remove('is-hole');
+    next.classList.add('is-hole');
+    current.tile = next;
+    status.textContent = `${art.title}, ${tiles.indexOf(next) + 1} sur ${tiles.length}`;
+    await img.decode().catch(() => {});
+    await fade(0, 1).finished.catch(() => {});
+    img.getAnimations().forEach((a) => a.cancel());
+    busy = false;
+  }
+
   async function close() {
     if (!current || busy) return;
     busy = true;
@@ -108,6 +129,9 @@ export function initViewer(root) {
   });
   document.addEventListener('click', (event) => {
     if (event.target.closest('.capsule-close')) close();
+    else if (event.target.closest('.capsule-prev')) navigate(-1);
+    else if (event.target.closest('.capsule-next')) navigate(1);
+    // .capsule-down : le contenu détaillé sera ajouté plus tard
   });
 
   document.addEventListener('keydown', (event) => {
@@ -115,10 +139,17 @@ export function initViewer(root) {
     if (event.key === 'Escape') {
       event.preventDefault();
       close();
+    } else if (event.key === 'ArrowLeft') {
+      navigate(-1);
+    } else if (event.key === 'ArrowRight') {
+      navigate(1);
     } else if (event.key === 'Tab') {
-      // Seul le bouton Fermer est atteignable : le focus reste dessus.
+      // Le focus boucle sur les boutons de la capsule ouverte.
+      const buttons = [...current.viewer.querySelectorAll('.capsule-btn')];
+      const index = buttons.indexOf(document.activeElement);
+      const next = (index + (event.shiftKey ? -1 : 1) + buttons.length) % buttons.length;
       event.preventDefault();
-      current.viewer.querySelector('.capsule-close').focus();
+      buttons[next].focus();
     }
   });
 }

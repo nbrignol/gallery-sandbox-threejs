@@ -183,9 +183,6 @@ main {
   bottom: 2rem;
   width: min(40rem, calc(100% - 2rem));
   display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: start;
-  column-gap: 1rem;
   padding: 1rem 1rem 1rem 1.25rem;
   border-radius: 10px;
 }
@@ -193,7 +190,7 @@ main {
   font-size: 1.25rem;
   white-space: normal;
 }
-.capsule-close {
+.capsule-btn {
   display: grid;
   width: 2rem;
   height: 2rem;
@@ -206,11 +203,11 @@ main {
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
 }
-.capsule-close:hover {
+.capsule-btn:hover {
   background: rgba(255, 255, 255, 0.15);
   color: #fff;
 }
-.capsule-close:focus-visible {
+.capsule-btn:focus-visible {
   outline: 3px solid #fff;
   outline-offset: 3px;
 }
@@ -235,4 +232,31 @@ main {
   .capsule-desc {
     animation: none;
   }
+}
+
+/* Navigation dans la capsule ouverte : précédent | titre | suivant | fermer, puis description, puis flèche bas */
+.viewer .capsule {
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  column-gap: 0.5rem;
+}
+.viewer .capsule-title {
+  text-align: center;
+}
+.capsule-desc {
+  text-align: center;
+}
+.capsule-down {
+  grid-column: 1 / -1;
+  justify-self: center;
+  margin-top: 0.5rem;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

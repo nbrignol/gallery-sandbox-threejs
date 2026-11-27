@@ -90,6 +90,14 @@ main {
   background: #000;
   transition: scale 0.3s ease;
 }
+/* Héros : image + capsule. Dans la grille il remplit la carte ; en mode détail il passe dans le flux (voir plus bas) */
+.card-hero {
+  position: absolute;
+  inset: 0;
+}
+.card-article {
+  display: none;
+}
 .card-img {
   position: absolute;
   inset: 0;
@@ -140,10 +148,10 @@ main {
   text-overflow: ellipsis;
 }
 .capsule-desc,
-.capsule-close {
+.capsule-btn {
   display: none;
 }
-.capsule-close {
+.capsule-btn {
   width: 2rem;
   height: 2rem;
   padding: 0;
@@ -155,11 +163,11 @@ main {
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
 }
-.capsule-close:hover {
+.capsule-btn:hover {
   background: rgba(255, 255, 255, 0.15);
   color: #fff;
 }
-.capsule-close:focus-visible {
+.capsule-btn:focus-visible {
   outline: 3px solid #fff;
   outline-offset: 3px;
 }
@@ -197,6 +205,9 @@ main {
   scale: 1;
   transition: none;
 }
+.card.is-floating.is-top {
+  z-index: 21;
+}
 .card.is-settled {
   animation: float 7s ease-in-out infinite;
 }
@@ -213,9 +224,6 @@ main {
   bottom: 2rem;
   width: min(40rem, calc(100% - 2rem));
   display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: start;
-  column-gap: 1rem;
   padding: 1rem 1rem 1rem 1.25rem;
   border-radius: 10px;
   pointer-events: auto;
@@ -224,7 +232,7 @@ main {
   font-size: 1.25rem;
   white-space: normal;
 }
-.card.is-expanded .capsule-close {
+.card.is-expanded .capsule-btn {
   display: grid;
 }
 .card.is-expanded .capsule-desc {
@@ -233,6 +241,87 @@ main {
 }
 @keyframes fade-in {
   from { opacity: 0; }
+}
+
+/* Mode détail : la carte plein écran devient un conteneur qui défile ; le tableau (héros) est l'en-tête de la page,
+   et l'article suit juste après la capsule. Pas de translate/rotate/scale (même « 1 ») sur la carte ni sur la capsule :
+   ils feraient du bouton Fermer (position: fixed) un enfant positionné par rapport à eux et non à l'écran. */
+.card.is-detail {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  translate: none;
+  rotate: none;
+  scale: none;
+  animation: none;
+  background: #111;
+}
+.card.is-detail .card-hero {
+  position: relative;
+  inset: auto;
+  height: 100%;
+}
+.card.is-detail .capsule {
+  left: 0;
+  right: 0;
+  margin-inline: auto;
+  translate: none;
+  overflow: visible;
+  grid-template-columns: 1fr;
+}
+.card.is-detail .capsule-prev,
+.card.is-detail .capsule-next,
+.card.is-detail .capsule-down {
+  display: none;
+}
+/* Fermer reste accessible pendant la lecture : flottant, juste sous le bandeau (qui reste visible) */
+.card.is-detail .capsule-close {
+  position: fixed;
+  top: 4.5rem;
+  right: 1.25rem;
+  background: #000;
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.6);
+}
+.card.is-detail .card-article {
+  display: block;
+  padding: 3rem 1.25rem 6rem;
+  color: #e8e8e8;
+}
+.article {
+  max-width: 42rem;
+  margin: 0 auto;
+  font-size: 1.1rem;
+  line-height: 1.7;
+}
+.article h2 {
+  margin: 0 0 1rem;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  line-height: 1.15;
+  color: #fff;
+}
+.article h2:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 4px;
+}
+.article h3 {
+  margin: 2.25rem 0 0.5rem;
+  font-size: 1.4rem;
+  color: #fff;
+}
+.article p {
+  margin: 0 0 1.25rem;
+}
+.article-lead {
+  font-size: 1.3rem;
+  color: #fff;
+}
+.capsule-error {
+  grid-column: 1 / -1;
+  margin: 0.5rem 0 0;
+  text-align: center;
+  font-size: 0.95rem;
+  color: #ffb4b4;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -245,4 +334,31 @@ main {
   .card.is-expanded .capsule-desc {
     animation: none;
   }
+}
+
+/* Navigation dans la capsule ouverte : précédent | titre | suivant | fermer, puis description, puis flèche bas */
+.card.is-expanded .capsule {
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  column-gap: 0.5rem;
+}
+.card.is-expanded .capsule-title {
+  text-align: center;
+}
+.capsule-desc {
+  text-align: center;
+}
+.capsule-down {
+  grid-column: 1 / -1;
+  justify-self: center;
+  margin-top: 0.5rem;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
