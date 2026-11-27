@@ -14,7 +14,8 @@ export function loadArticle(url = ARTICLE_URL) {
 }
 
 // Défilement animé fait main (requestAnimationFrame) : ne dépend pas du `behavior: 'smooth'` du navigateur.
-// S'interrompt dès que la personne reprend la main (molette, toucher, clavier).
+// S'interrompt si la personne touche l'écran ou le clavier. La molette / le trackpad sont ignorés pendant
+// l'animation : l'inertie d'un geste de défilement qui vient de déclencher le détail ne doit pas la combattre.
 // Renvoie une Promise résolue à la fin de l'animation (ou à son interruption).
 export function smoothScrollTo(el, top, duration = 900) {
   return new Promise((resolve) => {
@@ -22,14 +23,17 @@ export function smoothScrollTo(el, top, duration = 900) {
     const distance = top - start;
     const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2); // easeInOutCubic
     const t0 = performance.now();
-    const types = ['wheel', 'touchstart', 'keydown'];
+    const types = ['touchstart', 'keydown'];
+    const swallowWheel = (event) => event.preventDefault();
     let frame;
     const stop = () => {
       cancelAnimationFrame(frame);
       for (const type of types) el.removeEventListener(type, stop);
+      el.removeEventListener('wheel', swallowWheel);
       resolve();
     };
     for (const type of types) el.addEventListener(type, stop, { passive: true });
+    el.addEventListener('wheel', swallowWheel, { passive: false });
     const step = (now) => {
       const t = Math.min(1, (now - t0) / duration);
       el.scrollTop = start + distance * ease(t);

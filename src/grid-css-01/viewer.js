@@ -6,6 +6,8 @@ import { loadArticle, smoothScrollTo } from './detail.js';
 
 const DURATION = 550;
 const FADE = 300;
+const SCROLL_THRESHOLD = 80; // px de molette / trackpad cumulés vers le bas pour ouvrir le détail
+const SWIPE_THRESHOLD = 60; // px de glissement du doigt vers le haut pour ouvrir le détail
 const HERO_VISIBLE = 0.4; // part du tableau qui reste visible après le défilement vers l'article
 const EASING = 'cubic-bezier(0.2, 0.7, 0.2, 1)';
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
@@ -33,6 +35,7 @@ export function initViewer(root) {
   const cards = [...root.querySelectorAll('.card')];
   let current = null;
   let busy = false;
+  let autoScrolling = false; // défilement animé vers l'article en cours
 
   // Tout ce qui est derrière la carte ouverte est inerte (clavier, lecteurs d'écran, clics).
   const setInert = (on, keep) => {
@@ -88,6 +91,16 @@ export function initViewer(root) {
     card.querySelector('.capsule-down').disabled = false;
   }
 
+  // Retour du détail au tableau plein écran (sans fermer : on reste sur le même tableau).
+  function exitDetail() {
+    const card = current;
+    if (!card || busy || !card.classList.contains('is-detail')) return;
+    resetDetail(card);
+    card.classList.add('is-settled'); // le flottement reprend
+    card.querySelector('.capsule-down').focus({ preventScroll: true });
+    status.textContent = 'Retour au tableau';
+  }
+
   // Flèche vers le bas : charge l'article (XHR), l'injecte à la suite de la capsule, puis fait défiler jusqu'à lui.
   async function openDetail() {
     const card = current;
@@ -125,10 +138,14 @@ export function initViewer(root) {
     await new Promise(requestAnimationFrame); // laisse la mise en page se faire avant de mesurer
     // On s'arrête quand 40 % du tableau reste visible en haut (l'article commence juste dessous).
     const target = Math.round(card.querySelector('.card-hero').offsetHeight * (1 - HERO_VISIBLE));
-    if (reduceMotion.matches) card.scrollTop = target;
-    else smoothScrollTo(card, target);
     article.querySelector('h2')?.focus({ preventScroll: true });
     status.textContent = 'Article chargé';
+    if (reduceMotion.matches) card.scrollTop = target;
+    else {
+      autoScrolling = true;
+      await smoothScrollTo(card, target);
+      autoScrolling = false;
+    }
   }
 
   async function navigate(delta, focusSelector) {
@@ -194,6 +211,74 @@ export function initViewer(root) {
     else if (event.target.closest('.capsule-prev')) navigate(-1, '.capsule-prev');
     else if (event.target.closest('.capsule-next')) navigate(1, '.capsule-next');
     else if (event.target.closest('.capsule-down')) openDetail();
+  });
+
+  // Défilement sur la carte ouverte (molette, trackpad, geste tactile) :
+  //  - vers le bas depuis le tableau plein écran → ouvre le détail (comme la flèche) ;
+  //  - vers le haut alors qu'on est déjà tout en haut du détail → retour au tableau plein écran.
+  // Un « geste » = des événements de molette rapprochés (moins de 200 ms entre deux).
+  // Version actuelle : le retour est accepté même si l'inertie d'une remontée arrive en haut (pas besoin d'une pause).
+  // Version précédente (gardée en commentaire ci-dessous) : le geste devait avoir COMMENCÉ en haut, pour que l'inertie
+  // d'une remontée qui vient d'arriver en haut ne referme pas le détail aussitôt.
+  let wheelSum = 0;
+  let gestureActive = false;
+  let gestureStartedAtTop = false;
+  let gestureTimer;
+  root.addEventListener(
+    'wheel',
+    (event) => {
+      if (!current || busy) return;
+      if (!gestureActive) {
+        gestureActive = true;
+        gestureStartedAtTop = current.scrollTop <= 1;
+        wheelSum = 0;
+      }
+      clearTimeout(gestureTimer);
+      gestureTimer = setTimeout(() => (gestureActive = false), 200);
+
+      const delta = event.deltaY * (event.deltaMode === 1 ? 16 : 1); // lignes (Firefox) → pixels
+      const inDetail = current.classList.contains('is-detail');
+      if (!inDetail) {
+        wheelSum = delta > 0 ? wheelSum + delta : 0;
+        if (wheelSum >= SCROLL_THRESHOLD) {
+          wheelSum = 0;
+          openDetail();
+        }
+      // } else if (gestureStartedAtTop && !autoScrolling && current.scrollTop <= 1) { // version précédente
+      } else if (!autoScrolling && current.scrollTop <= 1) {
+        wheelSum = delta < 0 ? wheelSum - delta : 0;
+        if (wheelSum >= SCROLL_THRESHOLD) {
+          wheelSum = 0;
+          exitDetail();
+        }
+      } else {
+        wheelSum = 0;
+      }
+    },
+    { passive: true },
+  );
+
+  // Tactile : on décide à la fin du geste (pendant le glissement la carte défile déjà ou pas encore).
+  let touchStartY = null;
+  let touchStartedAtTop = false;
+  root.addEventListener(
+    'touchstart',
+    (event) => {
+      touchStartY = event.touches.length === 1 ? event.touches[0].clientY : null;
+      touchStartedAtTop = !!current && current.scrollTop <= 1;
+    },
+    { passive: true },
+  );
+  root.addEventListener('touchend', (event) => {
+    if (touchStartY === null || !current || busy) return;
+    const swipe = touchStartY - event.changedTouches[0].clientY; // > 0 : doigt vers le haut
+    touchStartY = null;
+    if (!current.classList.contains('is-detail')) {
+      if (swipe >= SWIPE_THRESHOLD) openDetail();
+    // } else if (touchStartedAtTop && !autoScrolling && current.scrollTop <= 1 && swipe <= -SWIPE_THRESHOLD) { // version précédente
+    } else if (!autoScrolling && current.scrollTop <= 1 && swipe <= -SWIPE_THRESHOLD) {
+      exitDetail();
+    }
   });
 
   document.addEventListener('keydown', (event) => {

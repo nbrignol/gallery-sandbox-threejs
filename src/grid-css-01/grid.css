@@ -220,7 +220,13 @@ main {
 .card.is-expanded .card-open {
   display: none;
 }
+/* Pas de translate sur la capsule ouverte (centrage par marges auto) : un translate ferait de la capsule le repère du
+   bouton Fermer en position: fixed. */
 .card.is-expanded .capsule {
+  left: 0;
+  right: 0;
+  margin-inline: auto;
+  translate: none;
   bottom: 2rem;
   width: min(40rem, calc(100% - 2rem));
   display: grid;
@@ -262,10 +268,6 @@ main {
   height: 100%;
 }
 .card.is-detail .capsule {
-  left: 0;
-  right: 0;
-  margin-inline: auto;
-  translate: none;
   overflow: visible;
   grid-template-columns: 1fr;
 }
@@ -274,8 +276,8 @@ main {
 .card.is-detail .capsule-down {
   display: none;
 }
-/* Fermer reste accessible pendant la lecture : flottant, juste sous le bandeau (qui reste visible) */
-.card.is-detail .capsule-close {
+/* Fermer reste toujours accessible (tableau plein écran comme détail) : flottant, juste sous le bandeau */
+.card.is-expanded .capsule-close {
   position: fixed;
   top: 4.5rem;
   right: 1.25rem;
@@ -336,9 +338,9 @@ main {
   }
 }
 
-/* Navigation dans la capsule ouverte : précédent | titre | suivant | fermer, puis description, puis flèche bas */
+/* Navigation dans la capsule ouverte : précédent | titre | suivant, puis description, puis flèche bas */
 .card.is-expanded .capsule {
-  grid-template-columns: auto 1fr auto auto;
+  grid-template-columns: auto 1fr auto; /* précédent | titre | suivant (Fermer est flottant, hors grille) */
   align-items: center;
   column-gap: 0.5rem;
 }
